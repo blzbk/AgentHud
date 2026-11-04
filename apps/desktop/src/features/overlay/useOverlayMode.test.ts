@@ -35,4 +35,26 @@ describe("useOverlayMode", () => {
     await act(() => emit(OVERLAY_MODE_EVENT, "click-through"));
     await waitFor(() => expect(result.current).toBe("click-through"));
   });
+
+  it("keeps an emitted mode over a slower load read", async () => {
+    let resolveLoad: (mode: string) => void = () => undefined;
+    mockIPC(
+      (command) =>
+        command === OVERLAY_MODE_COMMAND
+          ? new Promise<string>((resolve) => {
+              resolveLoad = resolve;
+            })
+          : undefined,
+      { shouldMockEvents: true },
+    );
+    const { result } = renderHook(() => useOverlayMode());
+
+    await act(() => emit(OVERLAY_MODE_EVENT, "interactive"));
+    await act(async () => {
+      resolveLoad("click-through");
+      await Promise.resolve();
+    });
+
+    expect(result.current).toBe("interactive");
+  });
 });

@@ -29,6 +29,7 @@ flowchart LR
   - `application` porte les cas d'usage et les ports (`UsageSource`, `AgentStateSource`).
   - Les adapters implémentent les ports.
   - Seul `src-tauri` assemble les modules (composition root).
+  - `overlay` est hors de l'hexagone : c'est la logique pure de la fenêtre, sans dépendance interne, utilisée seulement par `src-tauri`.
 - **Un adapter par provider.** Ajouter un LLM revient à créer `adapter-<llm>`, sans jamais toucher `domain`.
 - **Lecture passive uniquement en v1.** L'app lit les fichiers que les CLI écrivent déjà. Elle n'installe aucun hook, ne demande aucune configuration et ne lance aucun processus.
 - **Aucun appel à l'endpoint OAuth d'Anthropic.** Il est non officiel, renvoie des 429 et son usage dans un outil tiers est interdit par les conditions d'Anthropic. Le % du quota Claude est donc **estimé** à partir des tokens des transcripts.

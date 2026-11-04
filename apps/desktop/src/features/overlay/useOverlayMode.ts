@@ -23,9 +23,13 @@ export function useOverlayMode(): OverlayMode {
       changedSinceLoad = true;
       setMode(event.payload);
     });
-    void invoke<OverlayMode>(OVERLAY_MODE_COMMAND).then((current) => {
-      if (!changedSinceLoad) setMode(current);
-    });
+    invoke<OverlayMode>(OVERLAY_MODE_COMMAND)
+      .then((current) => {
+        if (!changedSinceLoad) setMode(current);
+      })
+      .catch((error: unknown) => {
+        console.error("cannot read the overlay mode, keeping the default", error);
+      });
     return () => {
       void unlisten.then((stop) => stop());
     };

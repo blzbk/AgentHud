@@ -5,6 +5,7 @@ use std::path::Path;
 use cargo_metadata::MetadataCommand;
 
 const DOMAIN: &str = "domain";
+const OVERLAY: &str = "overlay";
 const APPLICATION: &str = "application";
 const ADAPTER_PREFIX: &str = "adapter-";
 const SHARED_ADAPTER: &str = "adapter-fs";
@@ -14,6 +15,7 @@ const SHARED_ADAPTER: &str = "adapter-fs";
 fn violation(from: &str, to: &str) -> Option<&'static str> {
     match from {
         DOMAIN => Some("domain must not depend on any workspace crate"),
+        OVERLAY => Some("overlay must not depend on any workspace crate"),
         APPLICATION if to != DOMAIN => Some("application may depend on domain only"),
         adapter
             if adapter.starts_with(ADAPTER_PREFIX)
@@ -66,6 +68,7 @@ fn workspace_respects_hexagonal_dependency_direction() {
 #[test]
 fn rules_reject_forbidden_edges_and_accept_allowed_ones() {
     assert!(violation("domain", "application").is_some());
+    assert!(violation("overlay", "domain").is_some());
     assert!(violation("application", "adapter-fs").is_some());
     assert!(violation("adapter-claude", "adapter-codex").is_some());
     assert!(violation("adapter-fs", "adapter-claude").is_some());

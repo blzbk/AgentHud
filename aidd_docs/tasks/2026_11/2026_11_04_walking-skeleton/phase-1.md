@@ -70,6 +70,6 @@ status: done
 | Task | Acceptance criteria |
 | --- | --- |
 | 1 | `cargo -V`, `pnpm -v` et `cargo xwin --version` affichent une version dans WSL. |
-| 2 | `cargo metadata` liste les 6 crates de `crates/`. |
+| 2 | `cargo metadata` liste les 6 crates de `crates/` (7 depuis l'ajout de `crates/overlay` en revue). |
 | 3 | `cargo fmt --check`, `cargo clippy --workspace -- -D warnings` et `cargo test --workspace` sortent à 0. |
 | 4 | Le test `dependency_direction` passe, et échoue quand on ajoute une arête interdite. |

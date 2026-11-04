@@ -16,7 +16,7 @@
 
 - Convention: Conventional Commits
 - Format: `type(scope): description`
-- Scopes: `domain`, `application`, `adapter-claude`, `adapter-codex`, `adapter-fs`, `desktop`, `ui`
+- Scopes: `domain`, `application`, `adapter-claude`, `adapter-codex`, `adapter-fs`, `overlay`, `desktop`, `ui`
 - Rules: impératif, en minuscules, 72 caractères au maximum
 
 ## Commit Strategy

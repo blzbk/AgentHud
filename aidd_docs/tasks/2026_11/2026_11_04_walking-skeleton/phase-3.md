@@ -18,7 +18,7 @@ status: done
         ├── ✅ Cargo.toml · tauri.conf.json (phase 2, étendus)
         └── src/
             ├── ✅ lib.rs (phase 2, étendu)
-            └── ✅ overlay.rs
+            └── ✅ overlay_window.rs (glue Tauri ; le mode pur est dans `crates/overlay`, déplacé en revue)
 ```
 
 ## Test Scope
@@ -57,7 +57,7 @@ status: done
 
 > Donner au natif la maîtrise du click-through.
 
-1. `overlay.rs` : type `OverlayMode` (`ClickThrough`, `Interactive`), avec `toggle()` testé unitairement.
+1. `crates/overlay` (déplacé en revue depuis `overlay.rs`) : type `OverlayMode` (`ClickThrough`, `Interactive`), avec `toggle()` testé unitairement.
 2. Au `setup`, appliquer `set_ignore_cursor_events(true)`.
 3. Émettre l'event `overlay-mode` vers l'UI à chaque changement.
 
