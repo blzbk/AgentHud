@@ -33,7 +33,7 @@ status: done
 > Ramener toute position sauvegardée dans un écran existant.
 
 1. `placement.rs` : types `Point`, `Size` et `Rect` en pixels physiques.
-2. `fit_on_screens(saved, window_size, screens, primary) -> Option<Point>` : garde la position si la fenêtre tient entièrement dans un écran, sinon la ramène dans l'écran le plus proche, et à défaut dans l'écran principal.
+2. `fit_on_screens(saved, window_size, screens, primary) -> Option<Point>` : garde la position si la fenêtre tient entièrement dans un écran, sinon la ramène dans l'écran qu'elle chevauche le plus, et à défaut dans l'écran principal.
 
 ### `2)` Libellés du menu
 
