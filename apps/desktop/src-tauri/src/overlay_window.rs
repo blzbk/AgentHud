@@ -47,6 +47,25 @@ pub fn toggle<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     app.emit(MODE_EVENT, next.as_str())
 }
 
+/// Current mode of the overlay.
+pub fn current_mode<R: Runtime>(app: &AppHandle<R>) -> OverlayMode {
+    app.state::<OverlayState>().current()
+}
+
+/// Shows or hides the overlay window.
+///
+/// # Errors
+///
+/// Fails if the window is missing or rejects the change.
+pub fn set_visible<R: Runtime>(app: &AppHandle<R>, visible: bool) -> tauri::Result<()> {
+    let window = window(app)?;
+    if visible {
+        window.show()
+    } else {
+        window.hide()
+    }
+}
+
 /// Current mode, read by the UI on load so a reloaded page shows the truth.
 #[tauri::command]
 #[allow(clippy::needless_pass_by_value)] // Tauri injects `State` by value.
