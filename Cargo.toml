@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = ["crates/*", "apps/desktop/src-tauri"]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+version = "0.1.0"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+
+[workspace.dependencies]
+domain = { path = "crates/domain" }
+application = { path = "crates/application" }
+adapter-fs = { path = "crates/adapter-fs" }
+adapter-claude = { path = "crates/adapter-claude" }
+adapter-codex = { path = "crates/adapter-codex" }
+overlay = { path = "crates/overlay" }
+cargo_metadata = "0.23.1"
