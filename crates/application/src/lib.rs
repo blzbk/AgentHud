@@ -4,6 +4,8 @@
 
 mod ports;
 mod refresh_usage;
+mod usage_report;
 
 pub use ports::{SourceError, UsageSource};
 pub use refresh_usage::{ProviderUsage, RefreshUsage};
+pub use usage_report::{UsageReport, UsageStatus, WindowReport};

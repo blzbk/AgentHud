@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Câblage Tauri et carte Codex dans l'UI

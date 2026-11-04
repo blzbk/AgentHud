@@ -1,0 +1,55 @@
+.card {
+  margin-top: var(--space-2);
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.name {
+  margin: 0;
+  font-size: var(--font-size);
+  font-weight: 600;
+}
+
+.age {
+  color: var(--color-text-muted);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 3.5em 1fr 3.5em 4em;
+  gap: var(--space-2);
+  align-items: center;
+  margin-top: var(--space-1);
+  white-space: nowrap;
+}
+
+.label,
+.reset {
+  color: var(--color-text-muted);
+}
+
+.gauge {
+  height: var(--space-2);
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--color-gauge-track);
+}
+
+.fill {
+  height: 100%;
+  background: var(--color-gauge);
+}
+
+.percent {
+  text-align: right;
+}
+
+.unknown {
+  grid-column: 2 / -1;
+  color: var(--color-text-muted);
+  font-style: italic;
+}

@@ -1,8 +1,8 @@
 //! Composition root and Tauri shell hosting the overlay. It is the only place
-//! allowed to assemble `application` with its adapters; that wiring arrives
-//! with the first provider feature.
+//! allowed to assemble `application` with its adapters (see `usage_loop`).
 
 mod overlay_window;
+mod usage_loop;
 
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
@@ -33,9 +33,14 @@ pub fn run() {
                 .build(),
         )
         .manage(overlay_window::OverlayState::default())
-        .invoke_handler(tauri::generate_handler![overlay_window::overlay_mode])
+        .manage(usage_loop::UsageState::default())
+        .invoke_handler(tauri::generate_handler![
+            overlay_window::overlay_mode,
+            usage_loop::usage
+        ])
         .setup(move |app| {
             overlay_window::init(app.handle())?;
+            usage_loop::start(app.handle());
             if let Err(error) = app.global_shortcut().register(toggle_shortcut) {
                 log::error!("cannot register {toggle_shortcut}, staying click-through: {error}");
             }

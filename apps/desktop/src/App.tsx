@@ -1,5 +1,7 @@
 import styles from "./App.module.css";
 import { type OverlayMode, useOverlayMode } from "./features/overlay/useOverlayMode";
+import { ProviderCard } from "./features/usage/ProviderCard";
+import { useUsage } from "./features/usage/useUsage";
 
 const MODE_LABELS: Record<OverlayMode, string> = {
   "click-through": "click-through",
@@ -8,6 +10,7 @@ const MODE_LABELS: Record<OverlayMode, string> = {
 
 export function App() {
   const mode = useOverlayMode();
+  const usage = useUsage();
 
   return (
     <main className={styles.hud}>
@@ -18,6 +21,9 @@ export function App() {
           {MODE_LABELS[mode]}
         </span>
       </header>
+      {usage.map((provider) => (
+        <ProviderCard key={provider.provider} usage={provider} />
+      ))}
     </main>
   );
 }
