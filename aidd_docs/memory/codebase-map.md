@@ -12,12 +12,12 @@ flowchart TD
 
 - `crates/domain` : entités et value objects, sans I/O.
 - `crates/application` : cas d'usage et ports.
-- `crates/adapter-<provider>` : lecture et interprétation des données d'un provider.
-- `crates/adapter-fs` : polling sur la date de modification et résolution des chemins Windows et WSL.
+- `crates/adapter-<provider>` : lecture et interprétation des données d'un provider. `adapter-codex` : usage en % et état des agents (`task_started`, `task_complete`, `turn_aborted`). `adapter-claude` : tokens sur le bloc de 5 h estimé et état des agents d'après la dernière ligne `assistant` ou `user` des transcripts.
+- `crates/adapter-fs` : polling sur la date de modification (fichier le plus récent, fichiers récents), lecture de fin de fichier, horodatages RFC 3339, résolution des chemins Windows et WSL, liste des distros gardée 30 s (`CachedLister`).
 - `crates/overlay` : mode de la fenêtre overlay (click-through ou interactif), position ramenée sur un écran existant et libellés du menu du tray, sans Tauri, donc testable sur l'hôte.
 - `crates/architecture-tests` : test du sens des dépendances hexagonales (`cargo metadata`).
-- `apps/desktop/src-tauri` : composition root, application du mode overlay à la fenêtre, raccourci global, event `overlay-mode` et command `overlay_mode`. Boucle de polling de l'usage (`usage_loop.rs`) : event et command `usage`. Icône et menu du tray (`tray.rs`). Position mémorisée de la fenêtre (`window_position.rs`).
-- `apps/desktop/src` : UI React, organisée par feature (`features/<feature>/`, aujourd'hui `features/overlay` et `features/usage`, carte d'usage par provider).
+- `apps/desktop/src-tauri` : composition root, application du mode overlay à la fenêtre, raccourci global, event `overlay-mode` et command `overlay_mode`. Boucle de polling de l'usage et des agents (`usage_loop.rs`) : events et commands `usage` et `agents`. Icône et menu du tray (`tray.rs`). Position mémorisée de la fenêtre (`window_position.rs`).
+- `apps/desktop/src` : UI React, organisée par feature (`features/<feature>/`, aujourd'hui `features/overlay`, `features/usage`, carte d'usage par provider, et `features/agents`, liste des agents affichée dans la carte de son provider).
 
 ## Entry points
 

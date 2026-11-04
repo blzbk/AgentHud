@@ -7,6 +7,15 @@ const DAY = 24 * HOUR;
 const timeFormat = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" });
 const dayFormat = new Intl.DateTimeFormat("fr-FR", { weekday: "short" });
 
+const tokenFormat = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 });
+
+/** Token count, such as `1,2 M tokens`, `850 k tokens` or `12 tokens`. */
+export function formatTokens(tokens: number): string {
+  if (tokens >= 1_000_000) return `${tokenFormat.format(tokens / 1_000_000)} M tokens`;
+  if (tokens >= 1_000) return `${Math.round(tokens / 1_000)} k tokens`;
+  return `${tokens} tokens`;
+}
+
 /** Rounded percentage, such as `41 %`. */
 export function formatPercent(percent: number): string {
   return `${Math.round(percent)} %`;

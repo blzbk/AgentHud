@@ -8,18 +8,27 @@ import { useEffect, useState } from "react";
  * Times are seconds since the Unix epoch.
  */
 
+/** A window known in percent (Codex) or in tokens (Claude). */
 export type WindowUsage = {
-  usedPercent: number;
+  usedPercent?: number;
+  usedTokens?: number;
   resetsAt?: number;
+  /** The window bounds are guessed, not published by the provider. */
+  estimated?: boolean;
 };
 
+export type Provider = "codex" | "claude";
+
 export type ProviderUsage = {
-  provider: "codex" | "claude";
+  provider: Provider;
   status: "known" | "unknown";
   fiveHours?: WindowUsage;
   weekly?: WindowUsage;
   observedAt?: number;
 };
+
+/** Providers in display order. */
+export const PROVIDERS: readonly Provider[] = ["codex", "claude"];
 
 /** Emitted by the native side each time a provider's usage changes. */
 export const USAGE_EVENT = "usage";
@@ -27,7 +36,10 @@ export const USAGE_EVENT = "usage";
 /** Native command returning the current usage, read once on load. */
 export const USAGE_COMMAND = "usage";
 
-const INITIAL_USAGE: ProviderUsage[] = [{ provider: "codex", status: "unknown" }];
+const INITIAL_USAGE: ProviderUsage[] = PROVIDERS.map((provider) => ({
+  provider,
+  status: "unknown",
+}));
 
 /**
  * Usage of each provider. Reads the native usage on load, so a reloaded page

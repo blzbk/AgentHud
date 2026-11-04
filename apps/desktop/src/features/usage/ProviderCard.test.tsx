@@ -81,4 +81,49 @@ describe("ProviderCard", () => {
     expect(row("5h")).toHaveTextContent("0 %");
     expect(row("5h")).not.toHaveTextContent("↻");
   });
+
+  const claude: ProviderUsage = {
+    provider: "claude",
+    status: "known",
+    fiveHours: { usedTokens: 1_200_000, resetsAt: at(17, 0), estimated: true },
+    observedAt: NOW - 10,
+  };
+
+  it("shows Claude in estimated tokens, without a gauge nor a weekly window", () => {
+    render(<ProviderCard usage={claude} />);
+
+    const card = screen.getByRole("region", { name: "Claude" });
+    expect(row("5h")).toHaveTextContent("1,2 M tokens");
+    expect(row("5h")).toHaveTextContent("↻ ~17:00 estimé");
+    expect(within(card).queryByRole("meter")).not.toBeInTheDocument();
+    expect(within(card).queryByText("hebdo")).not.toBeInTheDocument();
+  });
+
+  it("drops the estimated tokens to 0 once the block ends", () => {
+    const ended = { usedTokens: 1_200_000, resetsAt: NOW - 1, estimated: true };
+    render(<ProviderCard usage={{ ...claude, fiveHours: ended }} />);
+
+    expect(row("5h")).toHaveTextContent("0 tokens");
+    expect(row("5h")).toHaveTextContent("estimé");
+    expect(row("5h")).not.toHaveTextContent("↻");
+  });
+
+  it("shows Claude unknown, never 0 tokens, when its usage is unknown", () => {
+    render(<ProviderCard usage={{ provider: "claude", status: "unknown" }} />);
+
+    const card = screen.getByRole("region", { name: "Claude" });
+    expect(within(card).getAllByText("unknown")).toHaveLength(1);
+    expect(card).not.toHaveTextContent("tokens");
+  });
+
+  it("shows its children below the usage", () => {
+    render(
+      <ProviderCard usage={claude}>
+        <p>agents</p>
+      </ProviderCard>,
+    );
+
+    const card = screen.getByRole("region", { name: "Claude" });
+    expect(within(card).getByText("agents")).toBeInTheDocument();
+  });
 });

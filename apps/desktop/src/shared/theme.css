@@ -6,6 +6,9 @@
   --color-interactive: #5eead4;
   --color-gauge: #5eead4;
   --color-gauge-track: rgb(255 255 255 / 15%);
+  --color-state-working: #5eead4;
+  --color-state-waiting: #fbbf24;
+  --color-state-unknown: #f2a7a7;
 
   --space-1: 4px;
   --space-2: 8px;

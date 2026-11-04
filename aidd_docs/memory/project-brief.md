@@ -22,6 +22,6 @@
 
 ## Key features
 
-- Usage des fenêtres 5 h et hebdomadaire pour chaque provider.
+- Usage des fenêtres 5 h et hebdomadaire pour Codex, en %. Pour Claude, tokens consommés sur un bloc de 5 h **estimé** à partir des transcripts locaux.
 - État de chaque agent : en attente, working, idle ou hors ligne.
 - Valeurs en cache avec leur âge, et remise à 0 % une fois `resets_at` passé.

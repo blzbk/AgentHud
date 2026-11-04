@@ -40,10 +40,12 @@ pub fn run() {
                 .build(),
         )
         .manage(overlay_window::OverlayState::default())
-        .manage(usage_loop::UsageState::default())
+        .manage(usage_loop::Published::<application::UsageReport>::default())
+        .manage(usage_loop::Published::<application::AgentReport>::default())
         .invoke_handler(tauri::generate_handler![
             overlay_window::overlay_mode,
-            usage_loop::usage
+            usage_loop::usage,
+            usage_loop::agents
         ])
         .setup(move |app| {
             overlay_window::init(app.handle())?;
