@@ -1,0 +1,4 @@
+{"timestamp":"2026-11-03T12:00:00.000Z","type":"session_meta","payload":{"id":"00000000-0000-0000-0000-000000000000","timestamp":"2026-11-03T12:00:00.000Z","cwd":"/workspace/project","originator":"codex_cli_rs","cli_version":"0.0.0","source":"cli","model_provider":"openai"}}
+{"timestamp":"2026-11-03T12:00:01.000Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"placeholder prompt"}]}}
+{"timestamp":"2026-11-03T12:00:02.000Z","type":"event_msg","payload":{"type":
+{"timestamp":"2026-11-03T12:00:03.000Z","type":"event_msg","payload":{"type":"agent_message","message":"placeholder answer"}}

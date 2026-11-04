@@ -4,6 +4,8 @@
   --color-text-muted: #a9b1c1;
   --color-click-through: var(--color-text-muted);
   --color-interactive: #5eead4;
+  --color-gauge: #5eead4;
+  --color-gauge-track: rgb(255 255 255 / 15%);
 
   --space-1: 4px;
   --space-2: 8px;

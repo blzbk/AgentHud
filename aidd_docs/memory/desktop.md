@@ -10,6 +10,7 @@
 - Lecture seule des dossiers `~/.claude` et `~/.codex`, côté Windows natif ou WSL (`\\wsl.localhost\...`, `\\wsl$\...`).
 - Tout accès aux fichiers passe par Rust, jamais par les plugins fs côté JS.
 - Aucun accès réseau en v1.
+- Seul processus lancé par l'app : `wsl.exe --list --running --quiet` à chaque tick de polling, sans console, pour lister les distros WSL déjà démarrées. Une distro arrêtée n'est jamais lue, car accéder à `\\wsl.localhost\<distro>` la démarrerait.
 
 ## Build and release
 

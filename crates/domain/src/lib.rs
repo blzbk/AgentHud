@@ -1,5 +1,9 @@
 //! Pure business model of `AgentHud`: entities and value objects, without I/O.
 
+mod usage;
+
+pub use usage::{EpochSeconds, Provider, UsageSnapshot, UsageWindow, WindowKind};
+
 /// Activity state of a coding agent, as shown by its badge.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AgentState {
