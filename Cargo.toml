@@ -16,4 +16,5 @@ application = { path = "crates/application" }
 adapter-fs = { path = "crates/adapter-fs" }
 adapter-claude = { path = "crates/adapter-claude" }
 adapter-codex = { path = "crates/adapter-codex" }
+overlay = { path = "crates/overlay" }
 cargo_metadata = "0.23.1"

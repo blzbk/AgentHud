@@ -1,7 +1,8 @@
-//! Composition root: the only place that assembles `application` with its
-//! adapters, and the Tauri shell that hosts the overlay.
+//! Composition root and Tauri shell hosting the overlay. It is the only place
+//! allowed to assemble `application` with its adapters; that wiring arrives
+//! with the first provider feature.
 
-mod overlay;
+mod overlay_window;
 
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
@@ -24,16 +25,17 @@ pub fn run() {
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(move |app, shortcut, event| {
                     if *shortcut == toggle_shortcut && event.state == ShortcutState::Pressed {
-                        if let Err(error) = overlay::toggle(app) {
+                        if let Err(error) = overlay_window::toggle(app) {
                             log::error!("cannot toggle the overlay mode: {error}");
                         }
                     }
                 })
                 .build(),
         )
-        .manage(overlay::OverlayState::default())
+        .manage(overlay_window::OverlayState::default())
+        .invoke_handler(tauri::generate_handler![overlay_window::overlay_mode])
         .setup(move |app| {
-            overlay::init(app.handle())?;
+            overlay_window::init(app.handle())?;
             if let Err(error) = app.global_shortcut().register(toggle_shortcut) {
                 log::error!("cannot register {toggle_shortcut}, staying click-through: {error}");
             }

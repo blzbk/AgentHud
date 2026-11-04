@@ -43,6 +43,7 @@ dependencies = [
  "adapter-fs",
  "application",
  "log",
+ "overlay",
  "tauri",
  "tauri-build",
  "tauri-plugin-global-shortcut",
@@ -2496,6 +2497,10 @@ dependencies = [
  "futures-core",
  "pin-project-lite",
 ]
+
+[[package]]
+name = "overlay"
+version = "0.1.0"
 
 [[package]]
 name = "pango"
