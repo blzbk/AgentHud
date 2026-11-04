@@ -14,6 +14,11 @@ pub fn run() {
     let toggle_shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyH);
 
     tauri::Builder::default()
+        // Must be the first plugin: a second launch exits before anything else
+        // starts, so the global shortcut always belongs to the one overlay.
+        .plugin(tauri_plugin_single_instance::init(|_app, _args, _cwd| {
+            log::info!("AgentHud is already running, second launch ignored");
+        }))
         .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()

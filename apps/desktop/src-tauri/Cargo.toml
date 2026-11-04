@@ -21,6 +21,7 @@ log = "0.4.35"
 tauri = { version = "2", features = [] }
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-log = "2"
+tauri-plugin-single-instance = "2"
 
 [lints]
 workspace = true
