@@ -100,7 +100,7 @@ mod tests {
 
     fn window(used_percent: f64, resets_at: Option<i64>) -> UsageWindow {
         UsageWindow::new(WindowKind::FiveHours, used_percent, resets_at)
-            .unwrap_or_else(|| panic!("{used_percent} should be a valid usage"))
+            .expect("usage should be a finite number")
     }
 
     #[test]

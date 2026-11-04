@@ -24,8 +24,8 @@ dependencies = [
 name = "adapter-fs"
 version = "0.1.0"
 dependencies = [
- "application",
- "domain",
+ "log",
+ "tempfile",
 ]
 
 [[package]]

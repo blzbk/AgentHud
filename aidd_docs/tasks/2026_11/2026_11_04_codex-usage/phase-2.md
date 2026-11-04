@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Accès fichiers : racines Windows/WSL et lecture de fin de fichier
