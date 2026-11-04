@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Modèle : tokens d'usage, sessions d'agent et déduction de l'état

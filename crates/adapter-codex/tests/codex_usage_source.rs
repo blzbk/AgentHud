@@ -42,7 +42,10 @@ fn latest(roots: &[&TempDir]) -> Option<UsageSnapshot> {
 }
 
 fn percent(window: Option<domain::UsageWindow>) -> f64 {
-    window.expect("window should be known").used_percent()
+    window
+        .expect("window should be known")
+        .used_percent()
+        .expect("window should be in percent")
 }
 
 #[test]
@@ -55,11 +58,11 @@ fn reads_the_current_schema_with_reset_times() {
     assert_eq!(snapshot.observed_at, CURRENT_OBSERVED_AT);
     let five_hours = snapshot.five_hours.expect("five hours window");
     assert_eq!(five_hours.kind(), WindowKind::FiveHours);
-    assert!((five_hours.used_percent() - 1.0).abs() < f64::EPSILON);
+    assert_eq!(five_hours.used_percent(), Some(1.0));
     assert_eq!(five_hours.resets_at(), Some(1_793_844_772));
     let weekly = snapshot.weekly.expect("weekly window");
     assert_eq!(weekly.kind(), WindowKind::Weekly);
-    assert!((weekly.used_percent() - 51.0).abs() < f64::EPSILON);
+    assert_eq!(weekly.used_percent(), Some(51.0));
     assert_eq!(weekly.resets_at(), Some(1_794_184_565));
 }
 
@@ -71,10 +74,10 @@ fn dates_legacy_resets_from_the_event_time() {
 
     assert_eq!(snapshot.observed_at, LEGACY_OBSERVED_AT);
     let five_hours = snapshot.five_hours.expect("five hours window");
-    assert!((five_hours.used_percent() - 12.0).abs() < f64::EPSILON);
+    assert_eq!(five_hours.used_percent(), Some(12.0));
     assert_eq!(five_hours.resets_at(), Some(LEGACY_OBSERVED_AT + 3600));
     let weekly = snapshot.weekly.expect("weekly window");
-    assert!((weekly.used_percent() - 30.0).abs() < f64::EPSILON);
+    assert_eq!(weekly.used_percent(), Some(30.0));
     assert_eq!(weekly.resets_at(), Some(LEGACY_OBSERVED_AT + 86_400));
 }
 

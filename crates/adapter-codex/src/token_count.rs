@@ -240,9 +240,10 @@ mod tests {
 
         let five_hours = snapshot.five_hours.expect("five hours window");
         assert_eq!(five_hours.kind(), WindowKind::FiveHours);
-        assert!((five_hours.used_percent() - 1.0).abs() < f64::EPSILON);
-        assert!(
-            (snapshot.weekly.expect("weekly window").used_percent() - 51.0).abs() < f64::EPSILON
+        assert_eq!(five_hours.used_percent(), Some(1.0));
+        assert_eq!(
+            snapshot.weekly.expect("weekly window").used_percent(),
+            Some(51.0)
         );
     }
 
@@ -254,10 +255,11 @@ mod tests {
 
         let snapshot = parse_line(&line, FALLBACK).expect("line should carry usage");
 
-        assert!(
-            (snapshot.five_hours.expect("five hours").used_percent() - 3.0).abs() < f64::EPSILON
+        assert_eq!(
+            snapshot.five_hours.expect("five hours").used_percent(),
+            Some(3.0)
         );
-        assert!((snapshot.weekly.expect("weekly").used_percent() - 4.0).abs() < f64::EPSILON);
+        assert_eq!(snapshot.weekly.expect("weekly").used_percent(), Some(4.0));
     }
 
     #[test]

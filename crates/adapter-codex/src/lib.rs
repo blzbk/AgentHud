@@ -170,7 +170,7 @@ mod tests {
             .latest()
             .expect("usage should be readable")
             .and_then(|snapshot| snapshot.five_hours)
-            .map(|window| window.used_percent())
+            .and_then(|window| window.used_percent())
     }
 
     #[test]
