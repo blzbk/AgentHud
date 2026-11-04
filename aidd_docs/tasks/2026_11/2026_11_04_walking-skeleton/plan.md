@@ -1,6 +1,6 @@
 ---
 objective: "Un exe Windows cross-compilé depuis WSL affiche l'overlay AgentHud (transparent, au premier plan, click-through, bascule par raccourci) sur un workspace hexagonal compilable, avec tous les gates verts et la RAM mesurée."
-status: in-progress
+status: implemented
 ---
 
 # Plan: Walking skeleton AgentHud
