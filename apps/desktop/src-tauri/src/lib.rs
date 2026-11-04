@@ -3,6 +3,7 @@
 
 mod overlay_window;
 mod usage_loop;
+mod window_position;
 
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
@@ -40,6 +41,9 @@ pub fn run() {
         ])
         .setup(move |app| {
             overlay_window::init(app.handle())?;
+            let window = overlay_window::window(app.handle())?;
+            window_position::restore(&window);
+            window_position::remember(&window);
             usage_loop::start(app.handle());
             if let Err(error) = app.global_shortcut().register(toggle_shortcut) {
                 log::error!("cannot register {toggle_shortcut}, staying click-through: {error}");

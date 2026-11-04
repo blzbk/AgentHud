@@ -54,7 +54,12 @@ pub fn overlay_mode(state: State<'_, OverlayState>) -> &'static str {
     state.current().as_str()
 }
 
-fn window<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<WebviewWindow<R>> {
+/// The overlay window.
+///
+/// # Errors
+///
+/// Fails if the window is missing.
+pub fn window<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<WebviewWindow<R>> {
     app.get_webview_window(WINDOW_LABEL)
         .ok_or(tauri::Error::WebviewNotFound)
 }

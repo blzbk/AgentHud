@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Déplacement par la barre de titre et position mémorisée
@@ -10,6 +10,9 @@ status: pending
 
 ```txt
 .
+├── crates/overlay/
+│   ├── ✏️ Cargo.toml (serde, serde_json)
+│   └── src/ ✏️ placement.rs (JSON de `Point`)
 └── apps/desktop/
     ├── src/
     │   ├── ✏️ App.tsx · App.test.tsx · App.module.css

@@ -1,11 +1,33 @@
 //! Keeps a saved window position on a screen that still exists, so a window
 //! moved to a monitor since unplugged never comes back out of sight.
 
+use serde::{Deserialize, Serialize};
+
 /// A position in physical pixels, the window's top-left corner.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Point {
     pub x: i32,
     pub y: i32,
+}
+
+impl Point {
+    /// Saved form of the position, as written to the window file.
+    ///
+    /// # Errors
+    ///
+    /// Fails only if serialization itself fails, which a plain point cannot.
+    pub fn to_json(self) -> Result<String, serde_json::Error> {
+        serde_json::to_string(&self)
+    }
+
+    /// Reads a position saved by [`Point::to_json`].
+    ///
+    /// # Errors
+    ///
+    /// Fails if `json` is not a saved position.
+    pub fn from_json(json: &str) -> Result<Self, serde_json::Error> {
+        serde_json::from_str(json)
+    }
 }
 
 /// A size in physical pixels.
@@ -129,6 +151,22 @@ mod tests {
             height: 1440,
         },
     };
+
+    #[test]
+    fn a_saved_position_reads_back_identical() {
+        let saved = Point { x: -1200, y: 340 };
+
+        let json = saved.to_json().expect("a point serializes");
+
+        assert_eq!(json, r#"{"x":-1200,"y":340}"#);
+        assert_eq!(Point::from_json(&json).ok(), Some(saved));
+    }
+
+    #[test]
+    fn rejects_an_unreadable_saved_position() {
+        assert!(Point::from_json("").is_err());
+        assert!(Point::from_json(r#"{"x":"left"}"#).is_err());
+    }
 
     #[test]
     fn keeps_a_position_fully_on_a_known_screen() {

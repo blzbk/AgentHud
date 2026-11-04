@@ -1,6 +1,6 @@
 ---
 objective: "L'utilisateur déplace l'overlay en mode interactif, retrouve sa position au lancement suivant, et pilote l'app (mode, afficher/masquer, quitter) depuis une icône de la zone de notification ; un 2e lancement réaffiche l'overlay."
-status: pending
+status: in-progress
 ---
 
 # Plan: Déplacement de l'overlay et icône de notification

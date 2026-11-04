@@ -49,11 +49,13 @@ dependencies = [
  "domain",
  "log",
  "overlay",
+ "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-global-shortcut",
  "tauri-plugin-log",
  "tauri-plugin-single-instance",
+ "thiserror 2.0.21",
  "tokio",
 ]
 
@@ -2511,6 +2513,10 @@ dependencies = [
 [[package]]
 name = "overlay"
 version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "pango"

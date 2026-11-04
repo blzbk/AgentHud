@@ -20,10 +20,12 @@ application.workspace = true
 domain.workspace = true
 log.workspace = true
 overlay.workspace = true
+serde_json.workspace = true
 tauri = { version = "2", features = [] }
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-log = "2"
 tauri-plugin-single-instance = "2"
+thiserror.workspace = true
 tokio = { workspace = true, features = ["time"] }
 
 [lints]
