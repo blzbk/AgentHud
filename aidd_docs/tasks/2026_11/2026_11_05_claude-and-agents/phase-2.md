@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Accès fichiers : sessions récentes et liste des distros en cache

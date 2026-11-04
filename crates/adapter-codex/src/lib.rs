@@ -7,11 +7,10 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Mutex, PoisonError};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use adapter_fs::DatedFile;
 use application::{SourceError, UsageSource};
-use domain::{EpochSeconds, Provider, UsageSnapshot};
+use domain::{Provider, UsageSnapshot};
 
 /// Folder of the Codex data, under each home.
 pub const CODEX_DIR: &str = ".codex";
@@ -71,7 +70,7 @@ where
         }
 
         self.reads.fetch_add(1, Ordering::Relaxed);
-        let fallback_time = epoch_seconds(newest.modified);
+        let fallback_time = adapter_fs::epoch_seconds(newest.modified);
         let read = adapter_fs::find_last(&newest.path, |line| {
             token_count::parse_line(line, fallback_time)
         })
@@ -128,13 +127,6 @@ where
             (latest, _) => Ok(latest),
         }
     }
-}
-
-fn epoch_seconds(time: SystemTime) -> EpochSeconds {
-    time.duration_since(UNIX_EPOCH)
-        .ok()
-        .and_then(|elapsed| EpochSeconds::try_from(elapsed.as_secs()).ok())
-        .unwrap_or_default()
 }
 
 #[cfg(test)]
