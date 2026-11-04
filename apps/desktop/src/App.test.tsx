@@ -36,6 +36,17 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("interactif"));
   });
 
+  it("lets the title bar move the window only in interactive mode", async () => {
+    render(<App />);
+    const header = screen.getByRole("heading", { name: "AgentHud" }).closest("header");
+
+    expect(header).not.toHaveAttribute("data-tauri-drag-region");
+
+    await act(() => emit(OVERLAY_MODE_EVENT, "interactive"));
+
+    await waitFor(() => expect(header).toHaveAttribute("data-tauri-drag-region", "deep"));
+  });
+
   it("shows the Codex card as unknown until its usage is known", () => {
     render(<App />);
 

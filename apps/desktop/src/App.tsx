@@ -14,7 +14,11 @@ export function App() {
 
   return (
     <main className={styles.hud}>
-      <header className={styles.header}>
+      {/* Dragging needs the cursor, so only the interactive mode can move the window. */}
+      <header
+        className={styles.header}
+        data-tauri-drag-region={mode === "interactive" ? "deep" : undefined}
+      >
         <h1 className={styles.title}>AgentHud</h1>
         <span className={styles.mode} data-mode={mode} role="status">
           <span className={styles.dot} aria-hidden="true" />

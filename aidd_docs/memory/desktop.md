@@ -4,6 +4,10 @@
 
 - Tauri, avec l'UI dans la WebView2 de Windows. Le process principal est en Rust (`apps/desktop/src-tauri`).
 - Fenêtre overlay transparente, `alwaysOnTop`, sans décoration. Elle est click-through via `set_ignore_cursor_events`, et un raccourci clavier la rend interactive.
+- En mode interactif, l'en-tête porte `data-tauri-drag-region="deep"` : on déplace l'overlay par son titre. Cela demande la permission `core:window:allow-start-dragging`.
+- La position est sauvegardée dans `<app_config_dir>/window.json` (500 ms après le dernier déplacement). Au lancement, elle est ramenée sur un écran existant (`overlay::fit_on_screens`). Un fichier absent ou illisible laisse la position par défaut.
+- Icône dans la zone de notification (`tray.rs`), menu « Mode interactif » / « Mode click-through », « Masquer » / « Afficher » et « Quitter ». Les libellés suivent l'état, que le changement vienne du menu ou du raccourci.
+- Une seule instance. Un 2e lancement réaffiche l'overlay masqué.
 
 ## Native access
 

@@ -1,6 +1,11 @@
 //! Overlay mode of the main window, kept free of Tauri so it builds and is
 //! tested on any host. `src-tauri` applies it to the real window.
 
+mod placement;
+pub mod tray_menu;
+
+pub use placement::{fit_on_screens, Point, Rect, Size};
+
 /// Whether mouse events go through the overlay or are handled by it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum OverlayMode {
