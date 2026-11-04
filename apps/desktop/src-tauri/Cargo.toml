@@ -17,7 +17,10 @@ adapter-claude.workspace = true
 adapter-codex.workspace = true
 adapter-fs.workspace = true
 application.workspace = true
+log = "0.4.35"
 tauri = { version = "2", features = [] }
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-log = "2"
 
 [lints]
 workspace = true

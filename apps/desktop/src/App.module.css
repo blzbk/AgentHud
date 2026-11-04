@@ -17,3 +17,21 @@
   font-size: var(--font-size-title);
   font-weight: 600;
 }
+
+.mode {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-click-through);
+}
+
+.mode[data-mode="interactive"] {
+  color: var(--color-interactive);
+}
+
+.dot {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: 50%;
+  background: currentcolor;
+}

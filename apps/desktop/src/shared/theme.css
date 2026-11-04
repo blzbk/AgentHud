@@ -2,6 +2,8 @@
   --color-surface: rgb(20 24 33 / 82%);
   --color-text: #f2f4f8;
   --color-text-muted: #a9b1c1;
+  --color-click-through: var(--color-text-muted);
+  --color-interactive: #5eead4;
 
   --space-1: 4px;
   --space-2: 8px;
