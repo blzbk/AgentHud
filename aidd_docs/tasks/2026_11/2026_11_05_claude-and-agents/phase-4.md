@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Adapter Claude : tokens sur 5 h et état des agents

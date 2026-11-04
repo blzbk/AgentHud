@@ -9,6 +9,12 @@ publish = false
 adapter-fs.workspace = true
 application.workspace = true
 domain.workspace = true
+log.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
 
 [lints]
 workspace = true
