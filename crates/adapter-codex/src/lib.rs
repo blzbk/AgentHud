@@ -1,7 +1,9 @@
 //! Codex adapter: reads the files under `~/.codex` and implements the
 //! `application` ports for the Codex provider.
 
+mod agent_sessions;
 mod token_count;
+mod turn_signal;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -11,6 +13,8 @@ use std::sync::{Mutex, PoisonError};
 use adapter_fs::DatedFile;
 use application::{SourceError, UsageSource};
 use domain::{Provider, UsageSnapshot};
+
+pub use agent_sessions::CodexAgentSessions;
 
 /// Folder of the Codex data, under each home.
 pub const CODEX_DIR: &str = ".codex";
