@@ -111,7 +111,7 @@ AgentHud/
 
 Installation manuelle : le framework ne génère pas encore ces éléments automatiquement.
 
-1. Dans WSL (Ubuntu), installer : `sudo apt install nsis lld llvm clang`, Rust stable (`rustup`), la cible `rustup target add x86_64-pc-windows-msvc`, `cargo install --locked cargo-xwin`, et `corepack enable pnpm`. Voir l'ADR 0001.
+1. Dans WSL (Ubuntu), installer : `sudo apt install nsis lld llvm clang pkg-config libayatana-appindicator3-dev` (les 2 derniers sont exigés par le build Tauri dès que le tray est activé), Rust stable (`rustup`), la cible `rustup target add x86_64-pc-windows-msvc`, `cargo install --locked cargo-xwin`, et `corepack enable pnpm`. Voir l'ADR 0001.
 2. Vérifier que le runtime WebView2 est présent côté Windows. Il est inclus d'office dans Windows 10 et 11.
 3. Garder le repo **dans WSL**. L'exe se cross-compile avec `pnpm tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc`, puis se lance à la main côté Windows.
 4. Créer le workspace Cargo et l'app Tauri 2 (`pnpm create tauri-app`, template React + TS), puis la déplacer dans `apps/desktop/`.

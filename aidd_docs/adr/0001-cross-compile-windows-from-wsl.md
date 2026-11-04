@@ -26,7 +26,7 @@
 
 ## Conséquences
 
-- Il faut installer, avec `sudo` (fait par l'humain) : `nsis`, `lld`, `llvm`, `clang`, la cible `x86_64-pc-windows-msvc` et `cargo-xwin`.
+- Il faut installer, avec `sudo` (fait par l'humain) : `nsis`, `lld`, `llvm`, `clang`, `pkg-config`, `libayatana-appindicator3-dev` (exigés par tauri-cli dès que `tray-icon` est actif), la cible `x86_64-pc-windows-msvc` et `cargo-xwin`.
 - `cargo-xwin` télécharge le Windows SDK et le CRT de Microsoft. Cela implique d'accepter la licence Microsoft.
 - La documentation Tauri juge ce chemin « moins testé » qu'un build natif. Seul NSIS est disponible, sans MSI. La signature demande un outil externe.
 - Les releases officielles restent construites nativement par GitHub Actions `windows-latest`.
