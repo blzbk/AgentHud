@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Logique pure : position bornée à l'écran et libellés du menu
