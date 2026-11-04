@@ -1,0 +1,20 @@
+{
+  "name": "agenthud",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.9",
+  "scripts": {
+    "typecheck": "pnpm --filter @agenthud/desktop typecheck",
+    "lint": "pnpm --filter @agenthud/desktop lint",
+    "test": "pnpm --filter @agenthud/desktop test",
+    "tauri": "pnpm --filter @agenthud/desktop tauri"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1"
+  }
+}

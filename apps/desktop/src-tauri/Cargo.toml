@@ -1,0 +1,23 @@
+[package]
+name = "agenthud-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "agenthud"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+adapter-claude.workspace = true
+adapter-codex.workspace = true
+adapter-fs.workspace = true
+application.workspace = true
+tauri = { version = "2", features = [] }
+
+[lints]
+workspace = true

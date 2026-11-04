@@ -1,0 +1,29 @@
+:root {
+  --color-surface: rgb(20 24 33 / 82%);
+  --color-text: #f2f4f8;
+  --color-text-muted: #a9b1c1;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --radius: 8px;
+
+  --font-family: system-ui, "Segoe UI", sans-serif;
+  --font-size: 13px;
+  --font-size-title: 14px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: transparent;
+}
+
+body {
+  overflow: hidden;
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  color: var(--color-text);
+}
