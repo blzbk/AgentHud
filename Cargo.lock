@@ -18,6 +18,10 @@ dependencies = [
  "adapter-fs",
  "application",
  "domain",
+ "log",
+ "serde",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]
