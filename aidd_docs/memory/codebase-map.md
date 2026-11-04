@@ -14,9 +14,10 @@ flowchart TD
 - `crates/application` : cas d'usage et ports.
 - `crates/adapter-<provider>` : lecture et interprétation des données d'un provider.
 - `crates/adapter-fs` : polling sur la date de modification et résolution des chemins Windows et WSL.
+- `crates/overlay` : mode de la fenêtre overlay (click-through ou interactif), sans Tauri, donc testable sur l'hôte.
 - `crates/architecture-tests` : test du sens des dépendances hexagonales (`cargo metadata`).
-- `apps/desktop/src-tauri` : composition root, commands, events et fenêtre overlay.
-- `apps/desktop/src` : UI React, organisée par feature (`features/usage`, `features/agents`).
+- `apps/desktop/src-tauri` : composition root, application du mode overlay à la fenêtre, raccourci global, event `overlay-mode` et command `overlay_mode`.
+- `apps/desktop/src` : UI React, organisée par feature (`features/<feature>/`, aujourd'hui `features/overlay`).
 
 ## Entry points
 

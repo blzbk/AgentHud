@@ -19,5 +19,5 @@
 
 ## Run
 
-- `cargo test --workspace`
-- `pnpm test`
+- Commandes et ordre : voir `coding-assertions.md` (section « Before push »).
+- `src-tauri` ne compile que pour Windows. Seule sa compilation de tests est vérifiée depuis WSL. Toute logique à tester va donc dans un crate compilable sur l'hôte, par exemple `crates/overlay`.
