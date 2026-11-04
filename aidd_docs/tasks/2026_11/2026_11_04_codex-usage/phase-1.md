@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Modèle d'usage et cas d'usage RefreshUsage

@@ -1,6 +1,6 @@
 ---
 objective: "L'overlay affiche l'usage Codex des fenêtres 5 h et hebdomadaire, lu passivement dans les sessions JSONL de Windows et de WSL, avec l'heure de reset, l'âge de la donnée et « unknown » quand l'usage n'est pas connu."
-status: pending
+status: in-progress
 ---
 
 # Plan: Adapter Codex, usage 5 h et hebdomadaire
