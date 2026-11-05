@@ -15,4 +15,8 @@ flowchart LR
   Agent -- cli --> Tracker
   App -- "file read, polling" --> Claude
   App -- "file read, polling" --> Codex
+  AppServer["codex app-server · architecture.md"]
+  OAuth["api.anthropic.com OAuth usage · ADR 0002"]
+  App -- "stdio JSON-RPC, option" --> AppServer
+  App -- "https, degraded mode option" --> OAuth
 ```
