@@ -1,0 +1,1 @@
+{"pid":4242,"sessionId":"running","cwd":"/home/user/dev/project","startedAt":1793837506738,"procStart":"19379","version":"2.1.318","peerProtocol":1,"peerFeatures":["notify_idle"],"kind":"interactive","entrypoint":"cli","name":"session name","nameSource":"derived","nameSince":1793837506738,"updatedAt":1793837882595,"status":"busy","statusUpdatedAt":1793837855525}

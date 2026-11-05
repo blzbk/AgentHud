@@ -1,11 +1,24 @@
-import { useEffect, useState } from "react";
-import { formatAge, formatPercent, formatReset, nowInSeconds } from "./format";
+import { type ReactNode, useEffect, useState } from "react";
+import { formatAge, formatPercent, formatReset, formatTokens, nowInSeconds } from "./format";
 import styles from "./ProviderCard.module.css";
-import type { ProviderUsage, WindowUsage } from "./useUsage";
+import type { Provider, ProviderUsage, WindowUsage } from "./useUsage";
 
-const PROVIDER_NAMES: Record<ProviderUsage["provider"], string> = {
+export const PROVIDER_NAMES: Record<Provider, string> = {
   codex: "Codex",
   claude: "Claude",
+};
+
+type WindowKind = "fiveHours" | "weekly";
+
+const WINDOW_LABELS: Record<WindowKind, string> = {
+  fiveHours: "5h",
+  weekly: "hebdo",
+};
+
+/** Windows each provider publishes: Claude has no known weekly window. */
+const PROVIDER_WINDOWS: Record<Provider, readonly WindowKind[]> = {
+  codex: ["fiveHours", "weekly"],
+  claude: ["fiveHours"],
 };
 
 /** How often resets and ages are recomputed between two native updates. */
@@ -26,19 +39,39 @@ type WindowRowProps = {
   now: number;
 };
 
+function UnknownRow({ label }: { label: string }) {
+  return (
+    <div className={styles.row}>
+      <span className={styles.label}>{label}</span>
+      <span className={styles.unknown}>unknown</span>
+    </div>
+  );
+}
+
 function WindowRow({ label, usage, now }: WindowRowProps) {
-  if (!usage) {
+  if (!usage || (usage.usedPercent === undefined && usage.usedTokens === undefined)) {
+    return <UnknownRow label={label} />;
+  }
+  const { resetsAt, estimated } = usage;
+  const pendingReset = resetsAt !== undefined && resetsAt > now ? resetsAt : undefined;
+  // Once the window has reset, its usage starts over from 0.
+  const reset = resetsAt !== undefined && pendingReset === undefined;
+  const resetLabel =
+    pendingReset !== undefined && `↻ ${estimated ? "~" : ""}${formatReset(pendingReset, now)}`;
+
+  if (usage.usedTokens !== undefined) {
     return (
-      <div className={styles.row}>
+      <div className={`${styles.row} ${styles.tokens}`}>
         <span className={styles.label}>{label}</span>
-        <span className={styles.unknown}>unknown</span>
+        <span>{formatTokens(reset ? 0 : usage.usedTokens)}</span>
+        <span className={styles.reset}>
+          {resetLabel}
+          {estimated && <span className={styles.estimated}> estimé</span>}
+        </span>
       </div>
     );
   }
-  const { resetsAt } = usage;
-  const pendingReset = resetsAt !== undefined && resetsAt > now ? resetsAt : undefined;
-  // Once the window has reset, its usage starts over from 0 %.
-  const percent = resetsAt !== undefined && pendingReset === undefined ? 0 : usage.usedPercent;
+  const percent = reset ? 0 : (usage.usedPercent ?? 0);
   return (
     <div className={styles.row}>
       <span className={styles.label}>{label}</span>
@@ -53,15 +86,22 @@ function WindowRow({ label, usage, now }: WindowRowProps) {
         <div className={styles.fill} style={{ width: `${percent}%` }} />
       </div>
       <span className={styles.percent}>{formatPercent(percent)}</span>
-      {pendingReset !== undefined && (
-        <span className={styles.reset}>↻ {formatReset(pendingReset, now)}</span>
-      )}
+      {resetLabel && <span className={styles.reset}>{resetLabel}</span>}
     </div>
   );
 }
 
-/** Usage of one provider: a gauge per quota window, its reset and the data age. */
-export function ProviderCard({ usage }: { usage: ProviderUsage }) {
+type ProviderCardProps = {
+  usage: ProviderUsage;
+  /** Shown below the usage, such as the provider's agents. */
+  children?: ReactNode;
+};
+
+/**
+ * Usage of one provider: a row per quota window, in percent with a gauge or
+ * in tokens, its reset and the data age.
+ */
+export function ProviderCard({ usage, children }: ProviderCardProps) {
   const now = useNow();
   const name = PROVIDER_NAMES[usage.provider];
   const known = usage.status === "known";
@@ -74,8 +114,15 @@ export function ProviderCard({ usage }: { usage: ProviderUsage }) {
           <span className={styles.age}>{formatAge(usage.observedAt, now)}</span>
         )}
       </header>
-      <WindowRow label="5h" usage={known ? usage.fiveHours : undefined} now={now} />
-      <WindowRow label="hebdo" usage={known ? usage.weekly : undefined} now={now} />
+      {PROVIDER_WINDOWS[usage.provider].map((kind) => (
+        <WindowRow
+          key={kind}
+          label={WINDOW_LABELS[kind]}
+          usage={known ? usage[kind] : undefined}
+          now={now}
+        />
+      ))}
+      {children}
     </section>
   );
 }

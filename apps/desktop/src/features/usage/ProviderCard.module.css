@@ -53,3 +53,11 @@
   color: var(--color-text-muted);
   font-style: italic;
 }
+
+.tokens {
+  grid-template-columns: 3.5em 1fr auto;
+}
+
+.estimated {
+  font-style: italic;
+}

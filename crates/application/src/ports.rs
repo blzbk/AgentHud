@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use domain::{Provider, UsageSnapshot};
+use domain::{AgentSession, Provider, UsageSnapshot};
 
 /// Why a source could not provide its usage.
 #[derive(Debug, thiserror::Error)]
@@ -25,4 +25,17 @@ pub trait UsageSource: Send + Sync {
     ///
     /// Fails when the usage data exists but cannot be read.
     fn latest(&self) -> Result<Option<UsageSnapshot>, SourceError>;
+}
+
+/// Lists the sessions of one provider's agents.
+pub trait AgentStateSource: Send + Sync {
+    fn provider(&self) -> Provider;
+
+    /// Sessions written recently, in no particular order. An empty list
+    /// means no agent of this provider is running.
+    ///
+    /// # Errors
+    ///
+    /// Fails when the sessions exist but cannot be listed.
+    fn sessions(&self) -> Result<Vec<AgentSession>, SourceError>;
 }

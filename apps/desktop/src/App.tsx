@@ -1,7 +1,9 @@
 import styles from "./App.module.css";
+import { AgentList } from "./features/agents/AgentList";
+import { type ProviderAgents, useAgents } from "./features/agents/useAgents";
 import { type OverlayMode, useOverlayMode } from "./features/overlay/useOverlayMode";
 import { ProviderCard } from "./features/usage/ProviderCard";
-import { useUsage } from "./features/usage/useUsage";
+import { PROVIDERS, type ProviderUsage, useUsage } from "./features/usage/useUsage";
 
 const MODE_LABELS: Record<OverlayMode, string> = {
   "click-through": "click-through",
@@ -11,6 +13,7 @@ const MODE_LABELS: Record<OverlayMode, string> = {
 export function App() {
   const mode = useOverlayMode();
   const usage = useUsage();
+  const agents = useAgents();
 
   return (
     <main className={styles.hud}>
@@ -25,9 +28,20 @@ export function App() {
           {MODE_LABELS[mode]}
         </span>
       </header>
-      {usage.map((provider) => (
-        <ProviderCard key={provider.provider} usage={provider} />
-      ))}
+      {PROVIDERS.map((provider) => {
+        const providerUsage: ProviderUsage = usage.find((entry) => entry.provider === provider) ?? {
+          provider,
+          status: "unknown",
+        };
+        const providerAgents: ProviderAgents = agents.find(
+          (entry) => entry.provider === provider,
+        ) ?? { provider, status: "unknown", agents: [] };
+        return (
+          <ProviderCard key={provider} usage={providerUsage}>
+            <AgentList agents={providerAgents} />
+          </ProviderCard>
+        );
+      })}
     </main>
   );
 }

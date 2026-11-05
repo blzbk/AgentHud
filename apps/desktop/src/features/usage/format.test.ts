@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatAge, formatPercent, formatReset } from "./format";
+import { formatAge, formatPercent, formatReset, formatTokens } from "./format";
 
 /** Seconds since the epoch of a local date, so tests hold in any time zone. */
 function local(day: number, hour: number, minute = 0): number {
@@ -10,6 +10,20 @@ describe("formatPercent", () => {
   it("rounds to a whole percent", () => {
     expect(formatPercent(41.4)).toBe("41 %");
     expect(formatPercent(0)).toBe("0 %");
+  });
+});
+
+describe("formatTokens", () => {
+  it("shows millions with one decimal", () => {
+    expect(formatTokens(1_200_000)).toBe("1,2 M tokens");
+    expect(formatTokens(59_160_902)).toBe("59,2 M tokens");
+    expect(formatTokens(3_000_000)).toBe("3 M tokens");
+  });
+
+  it("shows thousands, then raw counts", () => {
+    expect(formatTokens(850_400)).toBe("850 k tokens");
+    expect(formatTokens(12)).toBe("12 tokens");
+    expect(formatTokens(0)).toBe("0 tokens");
   });
 });
 

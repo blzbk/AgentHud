@@ -1,7 +1,7 @@
 //! Usage as sent to the UI: the wire shape of the `usage` command and event.
 //! The TypeScript side mirrors it in `features/usage/useUsage.ts`.
 
-use domain::{EpochSeconds, Provider, UsageWindow};
+use domain::{EpochSeconds, Provider, Usage, UsageWindow};
 use serde::Serialize;
 
 use crate::ProviderUsage;
@@ -13,13 +13,37 @@ pub enum UsageStatus {
     Unknown,
 }
 
-/// One quota window. Times are seconds since the Unix epoch.
+/// One quota window, known either in percent or in tokens. Times are seconds
+/// since the Unix epoch. `estimated` is sent only when the window bounds are
+/// guessed.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WindowReport {
-    pub used_percent: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub used_percent: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub used_tokens: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resets_at: Option<EpochSeconds>,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub estimated: bool,
+}
+
+impl WindowReport {
+    /// Report of `window` at `now`: a window already reset shows 0.
+    #[must_use]
+    pub fn new(window: &UsageWindow, now: EpochSeconds) -> Self {
+        let (used_percent, used_tokens) = match window.used_at(now) {
+            Usage::Percent(percent) => (Some(percent), None),
+            Usage::Tokens(tokens) => (None, Some(tokens)),
+        };
+        Self {
+            used_percent,
+            used_tokens,
+            resets_at: window.resets_at(),
+            estimated: window.is_estimated(),
+        }
+    }
 }
 
 /// Usage of one provider. Windows are absent when unknown.
@@ -43,10 +67,7 @@ impl UsageReport {
         match usage {
             ProviderUsage::Known(snapshot) => {
                 let window = |window: Option<UsageWindow>| {
-                    window.map(|window| WindowReport {
-                        used_percent: window.used_at(now),
-                        resets_at: window.resets_at(),
-                    })
+                    window.map(|window| WindowReport::new(&window, now))
                 };
                 Self {
                     provider: snapshot.provider.label(),
@@ -114,10 +135,13 @@ mod tests {
         let report = UsageReport::new(&known(), NOW);
 
         assert_eq!(
-            report.five_hours.map(|window| window.used_percent),
+            report.five_hours.and_then(|window| window.used_percent),
             Some(0.0)
         );
-        assert_eq!(report.weekly.map(|window| window.used_percent), Some(51.0));
+        assert_eq!(
+            report.weekly.and_then(|window| window.used_percent),
+            Some(51.0)
+        );
     }
 
     #[test]
@@ -146,6 +170,50 @@ mod tests {
         assert_eq!(
             report,
             json!({ "provider": "codex", "status": "known", "fiveHours": { "usedPercent": 5.0 }, "observedAt": NOW })
+        );
+    }
+
+    #[test]
+    fn serializes_an_estimated_token_window_without_percent() {
+        let usage = ProviderUsage::Known(UsageSnapshot {
+            provider: Provider::Claude,
+            five_hours: Some(
+                UsageWindow::tokens(WindowKind::FiveHours, 1_200_000, Some(NOW + 600)).estimated(),
+            ),
+            weekly: None,
+            observed_at: NOW - 10,
+        });
+
+        let report =
+            serde_json::to_value(UsageReport::new(&usage, NOW)).expect("report should serialize");
+
+        assert_eq!(
+            report,
+            json!({
+                "provider": "claude",
+                "status": "known",
+                "fiveHours": { "usedTokens": 1_200_000, "resetsAt": NOW + 600, "estimated": true },
+                "observedAt": NOW - 10,
+            })
+        );
+    }
+
+    #[test]
+    fn an_expired_token_window_reports_zero_tokens() {
+        let usage = ProviderUsage::Known(UsageSnapshot {
+            provider: Provider::Claude,
+            five_hours: Some(
+                UsageWindow::tokens(WindowKind::FiveHours, 1_200_000, Some(NOW)).estimated(),
+            ),
+            weekly: None,
+            observed_at: NOW - 3600,
+        });
+
+        let report = UsageReport::new(&usage, NOW);
+
+        assert_eq!(
+            report.five_hours.and_then(|window| window.used_tokens),
+            Some(0)
         );
     }
 }

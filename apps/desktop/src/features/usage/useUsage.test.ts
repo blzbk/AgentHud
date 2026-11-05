@@ -14,6 +14,11 @@ const KNOWN: ProviderUsage[] = [
   },
 ];
 
+const UNKNOWN: ProviderUsage[] = [
+  { provider: "codex", status: "unknown" },
+  { provider: "claude", status: "unknown" },
+];
+
 function mockNativeUsage(usage: unknown) {
   mockIPC((command) => (command === USAGE_COMMAND ? usage : undefined), {
     shouldMockEvents: true,
@@ -21,11 +26,11 @@ function mockNativeUsage(usage: unknown) {
 }
 
 describe("useUsage", () => {
-  it("starts with Codex unknown", () => {
+  it("starts with every provider unknown", () => {
     mockNativeUsage(new Promise(() => undefined));
     const { result } = renderHook(() => useUsage());
 
-    expect(result.current).toEqual([{ provider: "codex", status: "unknown" }]);
+    expect(result.current).toEqual(UNKNOWN);
   });
 
   it("shows the native usage read on load", async () => {
@@ -41,7 +46,7 @@ describe("useUsage", () => {
 
     await act(() => Promise.resolve());
 
-    expect(result.current).toEqual([{ provider: "codex", status: "unknown" }]);
+    expect(result.current).toEqual(UNKNOWN);
   });
 
   it("follows the usage emitted by the native side", async () => {

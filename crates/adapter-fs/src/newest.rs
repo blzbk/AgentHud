@@ -25,18 +25,44 @@ pub struct DatedFile {
 ///
 /// Fails when `root/subdir` exists but cannot be listed.
 pub fn newest_file(root: &Path, subdir: &str, extension: &str) -> io::Result<Option<DatedFile>> {
-    let dir = root.join(subdir);
-    let entries = match fs::read_dir(&dir) {
-        Ok(entries) => entries,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => return Err(error),
-    };
-    let mut newest = None;
-    visit(entries, extension, MAX_DEPTH, &mut newest);
+    let mut newest: Option<DatedFile> = None;
+    walk(&root.join(subdir), extension, MAX_DEPTH, &mut |file| {
+        if newest
+            .as_ref()
+            .is_none_or(|best| file.modified > best.modified)
+        {
+            newest = Some(file);
+        }
+    })?;
     Ok(newest)
 }
 
-fn visit(entries: fs::ReadDir, extension: &str, depth: usize, newest: &mut Option<DatedFile>) {
+/// Calls `found` for each file with `extension` under `dir`, descending at
+/// most `max_depth` levels (1 = the files of `dir` only).
+///
+/// A missing `dir` holds no file. Unreadable entries below it are logged and
+/// skipped.
+///
+/// # Errors
+///
+/// Fails when `dir` exists but cannot be listed.
+pub(crate) fn walk(
+    dir: &Path,
+    extension: &str,
+    max_depth: usize,
+    found: &mut impl FnMut(DatedFile),
+) -> io::Result<()> {
+    match fs::read_dir(dir) {
+        Ok(entries) => {
+            visit(entries, extension, max_depth, found);
+            Ok(())
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error),
+    }
+}
+
+fn visit(entries: fs::ReadDir, extension: &str, depth: usize, found: &mut impl FnMut(DatedFile)) {
     for entry in entries {
         let entry = match entry {
             Ok(entry) => entry,
@@ -56,16 +82,13 @@ fn visit(entries: fs::ReadDir, extension: &str, depth: usize, newest: &mut Optio
         if metadata.is_dir() {
             if depth > 1 {
                 match fs::read_dir(&path) {
-                    Ok(children) => visit(children, extension, depth - 1, newest),
+                    Ok(children) => visit(children, extension, depth - 1, found),
                     Err(error) => log::debug!("skipping {}: {error}", path.display()),
                 }
             }
         } else if path.extension().is_some_and(|ext| ext == extension) {
             match metadata.modified() {
-                Ok(modified) if newest.as_ref().is_none_or(|best| modified > best.modified) => {
-                    *newest = Some(DatedFile { path, modified });
-                }
-                Ok(_) => {}
+                Ok(modified) => found(DatedFile { path, modified }),
                 Err(error) => log::debug!("skipping {}: {error}", path.display()),
             }
         }

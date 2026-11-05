@@ -20,6 +20,7 @@ application.workspace = true
 domain.workspace = true
 log.workspace = true
 overlay.workspace = true
+serde.workspace = true
 serde_json.workspace = true
 tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-global-shortcut = "2"

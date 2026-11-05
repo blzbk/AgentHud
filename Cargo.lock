@@ -9,6 +9,10 @@ dependencies = [
  "adapter-fs",
  "application",
  "domain",
+ "log",
+ "serde",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]
@@ -49,6 +53,7 @@ dependencies = [
  "domain",
  "log",
  "overlay",
+ "serde",
  "serde_json",
  "tauri",
  "tauri-build",
