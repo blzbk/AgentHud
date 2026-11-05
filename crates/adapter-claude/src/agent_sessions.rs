@@ -1,5 +1,7 @@
-//! Claude agents: one per transcript written recently, with the state of
-//! its last turn.
+//! Claude agents. When the CLI marks its running sessions, the agents are
+//! exactly those sessions; otherwise one per transcript written recently.
+//! The state comes from the marker status, else from the last turn of the
+//! transcript.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -11,6 +13,7 @@ use adapter_fs::DatedFile;
 use application::{AgentStateSource, SourceError};
 use domain::{AgentSession, Provider, TurnSignal, ACTIVE_WITHIN};
 
+use crate::running_sessions::{running_sessions, RunningSession};
 use crate::transcript;
 use crate::{PROJECTS_DIR, TRANSCRIPT_EXTENSION};
 
@@ -123,7 +126,7 @@ where
         let mut first_error = None;
         for root in (self.roots)() {
             let dir = root.join(PROJECTS_DIR);
-            let files =
+            let transcripts =
                 match adapter_fs::recent_files(&dir, TRANSCRIPT_EXTENSION, since, SESSIONS_DEPTH) {
                     Ok(files) => files,
                     Err(source) => {
@@ -133,19 +136,26 @@ where
                         continue;
                     }
                 };
-            let (transcripts, subagent_writes) = split_subagents(&dir, files);
+            let (transcripts, subagent_writes) = split_subagents(&dir, transcripts);
+            let mut root_sessions = Vec::new();
             for file in &transcripts {
                 let last_write = subagent_writes
                     .get(&file.path)
                     .map_or(file.modified, |&write| write.max(file.modified));
                 match self.session(file, last_write, &mut cache) {
-                    Ok(session) => sessions.push(session),
+                    Ok(session) => root_sessions.push(session),
                     Err(error) => {
                         log::warn!("Claude session skipped: {error}");
                         first_error.get_or_insert(error);
                     }
                 }
                 seen.push(file.path.clone());
+            }
+            let running = running_sessions(&root);
+            if running.is_empty() {
+                sessions.extend(root_sessions);
+            } else {
+                sessions.extend(running_agents(running, root_sessions));
             }
         }
         cache.retain(|path, _| seen.contains(path));
@@ -180,8 +190,42 @@ fn split_subagents(
     (transcripts, subagent_writes)
 }
 
+/// The running sessions, completed by their transcript when it was written
+/// recently: its last write, its project when the marker has no `cwd`, and
+/// its last turn when the marker status is unknown. Transcripts of ended
+/// sessions are dropped.
+fn running_agents(
+    running: Vec<RunningSession>,
+    transcripts: Vec<AgentSession>,
+) -> impl Iterator<Item = AgentSession> {
+    let mut transcripts: HashMap<String, AgentSession> = transcripts
+        .into_iter()
+        .map(|session| (session.session_id.clone(), session))
+        .collect();
+    running.into_iter().map(move |marker| {
+        let transcript = transcripts.remove(&marker.session_id);
+        AgentSession {
+            provider: Provider::Claude,
+            project: marker.project.or_else(|| {
+                transcript
+                    .as_ref()
+                    .and_then(|session| session.project.clone())
+            }),
+            last_signal: marker
+                .signal
+                .or_else(|| transcript.as_ref().map(|session| session.last_signal))
+                .unwrap_or(TurnSignal::Unknown),
+            last_write: transcript.map_or_else(
+                || adapter_fs::epoch_seconds(marker.modified),
+                |session| session.last_write,
+            ),
+            session_id: marker.session_id,
+        }
+    })
+}
+
 /// Last folder of a Windows or Unix path.
-fn last_folder(path: &str) -> Option<String> {
+pub(crate) fn last_folder(path: &str) -> Option<String> {
     path.rsplit(['/', '\\'])
         .find(|part| !part.is_empty())
         .map(str::to_owned)

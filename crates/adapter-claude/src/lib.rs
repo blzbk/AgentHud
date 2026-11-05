@@ -2,6 +2,7 @@
 //! `application` ports for the Claude provider.
 
 mod agent_sessions;
+mod running_sessions;
 mod transcript;
 mod usage_block;
 mod usage_source;
