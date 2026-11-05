@@ -1,6 +1,6 @@
 ---
 objective: "Le HUD affiche les % exacts 5 h et hebdo de Claude (statusline, puis OAuth en mode dégradé optionnel) et de Codex (app-server en plus des sessions JSONL), avec la source de chaque donnée, un polling adaptatif testé sur l'hôte et des options persistées dans le tray."
-status: pending
+status: implemented
 ---
 
 # Plan: Quotas exacts Claude et Codex
