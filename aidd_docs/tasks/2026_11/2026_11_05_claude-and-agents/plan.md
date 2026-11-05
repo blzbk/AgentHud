@@ -1,6 +1,6 @@
 ---
 objective: "Le HUD présente Codex et Claude côte à côte : l'usage de chacun (Codex en %, Claude en tokens sur une fenêtre de 5 h estimée) et l'état de chaque session d'agent active (waiting, working, idle, offline), lus passivement dans les fichiers locaux de Windows et de WSL."
-status: in-progress
+status: implemented
 ---
 
 # Plan: Adapter Claude, état des agents et HUD multi-LLM
