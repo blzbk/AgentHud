@@ -54,7 +54,7 @@ impl RefreshUsage {
 mod tests {
     use std::path::PathBuf;
 
-    use domain::{Provider, UsageSnapshot, UsageWindow, WindowKind};
+    use domain::{Origin, Provider, UsageSnapshot, UsageWindow, WindowKind};
 
     use super::{ProviderUsage, RefreshUsage};
     use crate::ports::{SourceError, UsageSource};
@@ -90,6 +90,7 @@ mod tests {
             five_hours: UsageWindow::new(WindowKind::FiveHours, 12.0, Some(1_793_844_772)),
             weekly: UsageWindow::new(WindowKind::Weekly, 51.0, Some(1_794_184_565)),
             observed_at: 1_793_840_000,
+            origin: Origin::Sessions,
         }
     }
 

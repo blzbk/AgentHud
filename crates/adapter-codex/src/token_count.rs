@@ -2,7 +2,7 @@
 //! its session files. Every field is optional: the schema changes between
 //! Codex versions, and an unexpected line is skipped rather than failing.
 
-use domain::{EpochSeconds, Provider, UsageSnapshot, UsageWindow, WindowKind};
+use domain::{EpochSeconds, Origin, Provider, UsageSnapshot, UsageWindow, WindowKind};
 use serde::Deserialize;
 
 const FIVE_HOURS_MINUTES: i64 = 300;
@@ -92,6 +92,7 @@ pub fn parse_line(line: &str, fallback_time: EpochSeconds) -> Option<UsageSnapsh
         five_hours,
         weekly,
         observed_at,
+        origin: Origin::Sessions,
     })
 }
 

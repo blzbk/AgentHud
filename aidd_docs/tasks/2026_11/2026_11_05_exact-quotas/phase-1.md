@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Modèle : origine des données, quota épuisé, planificateur de polling et sources interrogées

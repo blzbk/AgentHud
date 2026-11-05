@@ -11,7 +11,7 @@ use std::time::{Duration, SystemTime};
 
 use adapter_fs::DatedFile;
 use application::{SourceError, UsageSource};
-use domain::{Provider, UsageSnapshot, UsageWindow, WindowKind};
+use domain::{Origin, Provider, UsageSnapshot, UsageWindow, WindowKind};
 
 use crate::transcript::{self, UsageEntry};
 use crate::usage_block;
@@ -153,6 +153,7 @@ where
                 ),
                 weekly: None,
                 observed_at: block.last_message,
+                origin: Origin::Transcripts,
             })),
         }
     }

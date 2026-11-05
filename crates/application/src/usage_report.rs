@@ -58,6 +58,12 @@ pub struct UsageReport {
     pub weekly: Option<WindowReport>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub observed_at: Option<EpochSeconds>,
+    /// Label of the `Origin` of the data, such as `statusline` or `estimate`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source: Option<&'static str>,
+    /// A polled source of the provider needs the user to log in again.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub auth_expired: bool,
 }
 
 impl UsageReport {
@@ -75,6 +81,8 @@ impl UsageReport {
                     five_hours: window(snapshot.five_hours),
                     weekly: window(snapshot.weekly),
                     observed_at: Some(snapshot.observed_at),
+                    source: Some(snapshot.origin.label()),
+                    auth_expired: false,
                 }
             }
             ProviderUsage::Unknown(provider) => Self::unknown(*provider),
@@ -90,13 +98,25 @@ impl UsageReport {
             five_hours: None,
             weekly: None,
             observed_at: None,
+            source: None,
+            auth_expired: false,
+        }
+    }
+
+    /// Same report, flagged when a polled source of the provider reports an
+    /// expired login.
+    #[must_use]
+    pub const fn with_auth_expired(self, auth_expired: bool) -> Self {
+        Self {
+            auth_expired,
+            ..self
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use domain::{Provider, UsageSnapshot, UsageWindow, WindowKind};
+    use domain::{Origin, Provider, UsageSnapshot, UsageWindow, WindowKind};
     use serde_json::json;
 
     use super::UsageReport;
@@ -110,6 +130,7 @@ mod tests {
             five_hours: UsageWindow::new(WindowKind::FiveHours, 12.0, Some(NOW - 1)),
             weekly: UsageWindow::new(WindowKind::Weekly, 51.0, Some(NOW + 3600)),
             observed_at: NOW - 180,
+            origin: Origin::Sessions,
         })
     }
 
@@ -126,6 +147,7 @@ mod tests {
                 "fiveHours": { "usedPercent": 12.0, "resetsAt": NOW - 1 },
                 "weekly": { "usedPercent": 51.0, "resetsAt": NOW + 3600 },
                 "observedAt": NOW - 180,
+                "source": "sessions",
             })
         );
     }
@@ -162,6 +184,7 @@ mod tests {
             five_hours: UsageWindow::new(WindowKind::FiveHours, 5.0, None),
             weekly: None,
             observed_at: NOW,
+            origin: Origin::Sessions,
         });
 
         let report =
@@ -169,7 +192,7 @@ mod tests {
 
         assert_eq!(
             report,
-            json!({ "provider": "codex", "status": "known", "fiveHours": { "usedPercent": 5.0 }, "observedAt": NOW })
+            json!({ "provider": "codex", "status": "known", "fiveHours": { "usedPercent": 5.0 }, "observedAt": NOW, "source": "sessions" })
         );
     }
 
@@ -182,6 +205,7 @@ mod tests {
             ),
             weekly: None,
             observed_at: NOW - 10,
+            origin: Origin::Transcripts,
         });
 
         let report =
@@ -194,6 +218,7 @@ mod tests {
                 "status": "known",
                 "fiveHours": { "usedTokens": 1_200_000, "resetsAt": NOW + 600, "estimated": true },
                 "observedAt": NOW - 10,
+                "source": "estimate",
             })
         );
     }
@@ -207,6 +232,7 @@ mod tests {
             ),
             weekly: None,
             observed_at: NOW - 3600,
+            origin: Origin::Sessions,
         });
 
         let report = UsageReport::new(&usage, NOW);
@@ -214,6 +240,18 @@ mod tests {
         assert_eq!(
             report.five_hours.and_then(|window| window.used_tokens),
             Some(0)
+        );
+    }
+
+    #[test]
+    fn flags_an_expired_login_only_when_set() {
+        let flagged =
+            serde_json::to_value(UsageReport::unknown(Provider::Claude).with_auth_expired(true))
+                .expect("report should serialize");
+
+        assert_eq!(
+            flagged,
+            json!({ "provider": "claude", "status": "unknown", "authExpired": true })
         );
     }
 }

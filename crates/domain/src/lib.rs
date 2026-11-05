@@ -4,4 +4,6 @@ mod agent;
 mod usage;
 
 pub use agent::{AgentSession, AgentState, TurnSignal, ACTIVE_WITHIN, IDLE_AFTER};
-pub use usage::{EpochSeconds, Provider, Usage, UsageSnapshot, UsageWindow, WindowKind};
+pub use usage::{
+    EpochSeconds, Exhaustion, Origin, Provider, Usage, UsageSnapshot, UsageWindow, WindowKind,
+};
