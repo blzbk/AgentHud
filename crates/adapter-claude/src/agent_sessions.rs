@@ -151,11 +151,9 @@ where
                 }
                 seen.push(file.path.clone());
             }
-            let running = running_sessions(&root);
-            if running.is_empty() {
-                sessions.extend(root_sessions);
-            } else {
-                sessions.extend(running_agents(running, root_sessions));
+            match running_sessions(&root) {
+                Some(running) => sessions.extend(running_agents(running, root_sessions)),
+                None => sessions.extend(root_sessions),
             }
         }
         cache.retain(|path, _| seen.contains(path));

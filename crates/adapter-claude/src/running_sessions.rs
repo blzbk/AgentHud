@@ -34,19 +34,28 @@ pub struct RunningSession {
     pub modified: SystemTime,
 }
 
-/// Running sessions of the `.claude` folder `root`. Empty when the folder
-/// holds no readable marker: the caller then falls back on the transcripts.
-pub fn running_sessions(root: &Path) -> Vec<RunningSession> {
+/// Running sessions of the `.claude` folder `root`. An existing folder with
+/// no marker means no running session. `None` when the folder is missing,
+/// unreadable, or holds markers none of which can be read (format changed):
+/// the caller then falls back on the transcripts.
+pub fn running_sessions(root: &Path) -> Option<Vec<RunningSession>> {
     let dir = root.join(SESSIONS_DIR);
-    let markers = match adapter_fs::recent_files(&dir, MARKER_EXTENSION, SystemTime::UNIX_EPOCH, 1)
-    {
-        Ok(markers) => markers,
-        Err(error) => {
-            log::debug!("no Claude session marker in {}: {error}", dir.display());
-            return Vec::new();
+    if !dir.is_dir() {
+        return None;
+    }
+    match adapter_fs::recent_files(&dir, MARKER_EXTENSION, SystemTime::UNIX_EPOCH, 1) {
+        Ok(markers) => {
+            let running: Vec<RunningSession> = markers.iter().filter_map(read_marker).collect();
+            (markers.is_empty() || !running.is_empty()).then_some(running)
         }
-    };
-    markers.iter().filter_map(read_marker).collect()
+        Err(error) => {
+            log::debug!(
+                "Claude session markers unreadable in {}: {error}",
+                dir.display()
+            );
+            None
+        }
+    }
 }
 
 fn read_marker(marker: &DatedFile) -> Option<RunningSession> {

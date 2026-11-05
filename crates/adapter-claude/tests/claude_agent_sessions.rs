@@ -313,3 +313,22 @@ fn unreadable_markers_fall_back_on_the_transcripts() {
 
     assert_eq!(sessions.len(), 2);
 }
+
+#[test]
+fn an_empty_marker_folder_means_no_running_session() {
+    let root = tempfile::tempdir().expect("temporary folder should be writable");
+    add_transcript(
+        &root,
+        "-workspace-project-a",
+        "ended",
+        "assistant-end-turn.jsonl",
+        Duration::from_mins(1),
+    );
+    fs::create_dir_all(root.path().join("sessions")).expect("folder should be writable");
+
+    let sessions = source(&root)
+        .sessions()
+        .expect("sessions should be readable");
+
+    assert_eq!(sessions.len(), 0);
+}
