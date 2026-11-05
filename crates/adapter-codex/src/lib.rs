@@ -2,6 +2,8 @@
 //! `application` ports for the Codex provider.
 
 mod agent_sessions;
+mod app_server;
+mod app_server_launch;
 mod open_threads;
 mod token_count;
 mod turn_signal;
@@ -16,6 +18,7 @@ use application::{SourceError, UsageSource};
 use domain::{Provider, UsageSnapshot};
 
 pub use agent_sessions::CodexAgentSessions;
+pub use app_server_launch::{candidates, exchange, find_codex, CodexAppServer, Launch};
 
 /// Folder of the Codex data, under each home.
 pub const CODEX_DIR: &str = ".codex";

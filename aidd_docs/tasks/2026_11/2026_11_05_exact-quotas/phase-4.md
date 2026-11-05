@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Codex : client `codex app-server` (`account/rateLimits/read`)
