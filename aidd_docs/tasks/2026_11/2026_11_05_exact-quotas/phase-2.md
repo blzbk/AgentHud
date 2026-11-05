@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Claude : script de statusline et lecture du fichier de quotas
