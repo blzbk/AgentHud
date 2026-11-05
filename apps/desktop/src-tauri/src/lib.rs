@@ -1,11 +1,14 @@
 //! Composition root and Tauri shell hosting the overlay. It is the only place
 //! allowed to assemble `application` with its adapters (see `usage_loop`).
 
+mod options_store;
 mod overlay_window;
+mod remote_poll;
 mod tray;
 mod usage_loop;
 mod window_position;
 
+use tauri::Manager;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 /// Starts the desktop app and blocks until it exits.
@@ -52,7 +55,12 @@ pub fn run() {
             let window = overlay_window::window(app.handle())?;
             window_position::restore(&window);
             window_position::remember(&window);
-            usage_loop::start(app.handle());
+            let options = options_store::load(app.handle());
+            let composition = usage_loop::compose(options.current());
+            app.manage(options);
+            app.manage(std::sync::Arc::clone(&composition.remote));
+            remote_poll::start(std::sync::Arc::clone(&composition.remote));
+            usage_loop::start(app.handle(), composition);
             // Without a tray the shortcut still drives the overlay: keep running.
             if let Err(error) = tray::init(app.handle()) {
                 log::error!("cannot create the tray icon: {error}");

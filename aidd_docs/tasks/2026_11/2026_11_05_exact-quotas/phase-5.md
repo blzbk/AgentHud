@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Desktop : options persistées, tray et boucle de polling distante

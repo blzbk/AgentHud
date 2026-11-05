@@ -5,14 +5,23 @@
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, SystemTime};
 
-use adapter_claude::{ClaudeAgentSessions, ClaudeUsageSource, CLAUDE_DIR};
-use adapter_codex::{CodexAgentSessions, CodexUsageSource, CODEX_DIR};
+use adapter_claude::{
+    ClaudeAgentSessions, ClaudeOAuthUsage, ClaudeStatuslineSource, ClaudeUsageSource,
+    UreqTransport, CLAUDE_DIR,
+};
+use adapter_codex::{CodexAgentSessions, CodexAppServer, CodexUsageSource, CODEX_DIR};
 use adapter_fs::{CachedLister, WslCli};
-use application::{AgentReport, RefreshUsage, TrackAgents, UsageReport};
+use application::{
+    Activity, AgentReport, FreshestUsage, PollPolicy, PolledUsage, RefreshUsage, TrackAgents,
+    UsageReport, UsageSource,
+};
 use domain::Provider;
+use overlay::Options;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, Runtime, State};
 use tokio::time::MissedTickBehavior;
+
+use crate::remote_poll::RemotePolls;
 
 /// Event emitted to the UI with the new usage reports as payload.
 const USAGE_EVENT: &str = "usage";
@@ -64,46 +73,102 @@ pub fn agents(state: State<'_, Published<AgentReport>>) -> Vec<AgentReport> {
     state.current()
 }
 
+/// Use cases of the file polling, and the remote sources they share.
+pub struct Composition {
+    usage: RefreshUsage,
+    agents: TrackAgents,
+    pub remote: Arc<RemotePolls>,
+}
+
 /// Usage and agent use cases wired to the Codex and Claude adapters, in
 /// display order. All sources share one cached list of WSL distributions.
-fn compose() -> (RefreshUsage, TrackAgents) {
+///
+/// - Codex: the freshest of the session files and `codex app-server`.
+/// - Claude: the statusline or OAuth quotas when known, else the estimate
+///   from the transcripts.
+pub fn compose(options: Options) -> Composition {
     let lister = Arc::new(CachedLister::new(WslCli));
     let roots = |dir: &'static str| {
         let lister = Arc::clone(&lister);
         move || adapter_fs::home_roots(dir, &*lister)
     };
+    let codex_app_server = Arc::new(PolledUsage::new(
+        Box::new(CodexAppServer::new(Arc::clone(&lister))),
+        PollPolicy::CODEX_APP_SERVER,
+        options.codex_app_server,
+    ));
+    let claude_oauth = Arc::new(PolledUsage::new(
+        Box::new(ClaudeOAuthUsage::new(
+            roots(CLAUDE_DIR),
+            UreqTransport::default(),
+        )),
+        PollPolicy::CLAUDE_OAUTH,
+        options.claude_oauth,
+    ));
+    let claude_statusline: Arc<dyn UsageSource> =
+        Arc::new(ClaudeStatuslineSource::new(roots(CLAUDE_DIR)));
     let usage = RefreshUsage::new(vec![
-        Box::new(CodexUsageSource::new(roots(CODEX_DIR))),
-        Box::new(ClaudeUsageSource::new(roots(CLAUDE_DIR))),
+        Box::new(FreshestUsage::new(
+            Provider::Codex,
+            vec![
+                Box::new(CodexUsageSource::new(roots(CODEX_DIR))),
+                Box::new(Arc::clone(&codex_app_server)),
+            ],
+        )),
+        Box::new(FreshestUsage::new(
+            Provider::Claude,
+            vec![
+                Box::new(Arc::clone(&claude_statusline)),
+                Box::new(Arc::clone(&claude_oauth)),
+                Box::new(ClaudeUsageSource::new(roots(CLAUDE_DIR))),
+            ],
+        )),
     ]);
     let agents = TrackAgents::new(vec![
         Box::new(CodexAgentSessions::new(roots(CODEX_DIR))),
         Box::new(ClaudeAgentSessions::new(roots(CLAUDE_DIR))),
     ]);
-    (usage, agents)
+    let remote = Arc::new(RemotePolls::new(
+        codex_app_server,
+        claude_oauth,
+        claude_statusline,
+    ));
+    Composition {
+        usage,
+        agents,
+        remote,
+    }
 }
 
-/// Starts the polling task. It runs for the whole life of the app.
-pub fn start<R: Runtime>(app: &AppHandle<R>) {
+/// Starts the file polling task. It runs for the whole life of the app.
+pub fn start<R: Runtime>(app: &AppHandle<R>, composition: Composition) {
     let app = app.clone();
-    let use_cases = Arc::new(compose());
+    let composition = Arc::new(composition);
     tauri::async_runtime::spawn(async move {
         let mut interval = tokio::time::interval(POLL_INTERVAL);
         interval.set_missed_tick_behavior(MissedTickBehavior::Delay);
         loop {
             interval.tick().await;
-            let use_cases = Arc::clone(&use_cases);
+            let composition = Arc::clone(&composition);
             // File reads block: keep them off the async workers.
             let reports = tauri::async_runtime::spawn_blocking(move || {
-                let (refresh, track) = &*use_cases;
+                let Composition {
+                    usage,
+                    agents,
+                    remote,
+                } = &*composition;
                 let now = adapter_fs::epoch_seconds(SystemTime::now());
-                let usage: Vec<UsageReport> = refresh
+                let usage: Vec<UsageReport> = usage
                     .execute()
                     .iter()
-                    .map(|usage| UsageReport::new(usage, now))
+                    .map(|usage| {
+                        UsageReport::new(usage, now)
+                            .with_auth_expired(remote.auth_expired(usage.provider()))
+                    })
                     .collect();
-                let agents: Vec<AgentReport> = track
-                    .execute(now)
+                let agents = agents.execute(now);
+                remote.set_activity(Activity::of(&agents, now));
+                let agents: Vec<AgentReport> = agents
                     .iter()
                     .map(|agents| AgentReport::new(agents, now))
                     .collect();
