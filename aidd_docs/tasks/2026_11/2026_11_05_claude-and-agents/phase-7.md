@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Agents réellement ouverts (marqueurs d'exécution des CLI)

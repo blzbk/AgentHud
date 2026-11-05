@@ -2,6 +2,7 @@
 //! `application` ports for the Codex provider.
 
 mod agent_sessions;
+mod open_threads;
 mod token_count;
 mod turn_signal;
 

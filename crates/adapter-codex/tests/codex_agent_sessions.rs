@@ -145,3 +145,125 @@ fn missing_roots_have_no_session() {
 
     assert!(sessions.is_ok_and(|sessions| sessions.is_empty()));
 }
+
+const THREAD: &str = "01a1a910-43de-7e81-8f33-fe85645cd2a8";
+
+/// Creates the empty lock of `thread`, written `age` ago, beside the
+/// permanent `.coordination.lock`.
+fn add_lock(root: &TempDir, thread: &str, age: Duration) -> PathBuf {
+    let dir = root.path().join("thread-writer-locks");
+    fs::create_dir_all(&dir).expect("folder should be writable");
+    File::create(dir.join(".coordination.lock")).expect("lock should be writable");
+    let lock = dir.join(format!("{thread}.lock"));
+    File::create(&lock).expect("lock should be writable");
+    touch(&lock, SystemTime::now() - age);
+    lock
+}
+
+#[test]
+fn an_open_thread_without_rollout_is_waiting() {
+    let root = tempfile::tempdir().expect("temporary folder should be writable");
+    let lock = add_lock(&root, THREAD, Duration::from_secs(30));
+
+    let sessions = source(&root)
+        .sessions()
+        .expect("sessions should be readable");
+
+    let locked = fs::metadata(&lock)
+        .and_then(|metadata| metadata.modified())
+        .expect("mtime should be readable");
+    assert_eq!(
+        sessions,
+        [AgentSession {
+            provider: Provider::Codex,
+            session_id: THREAD.to_owned(),
+            project: None,
+            last_signal: TurnSignal::TurnEnded,
+            last_write: adapter_fs::epoch_seconds(locked),
+        }]
+    );
+}
+
+#[test]
+fn an_open_thread_takes_the_state_of_its_rollout() {
+    let root = tempfile::tempdir().expect("temporary folder should be writable");
+    add_lock(&root, THREAD, Duration::from_mins(10));
+    add_session(
+        &root,
+        &format!("rollout-2026-11-03T12-00-00-{THREAD}.jsonl"),
+        "turn-running.jsonl",
+        Duration::from_secs(10),
+    );
+
+    let sessions = source(&root)
+        .sessions()
+        .expect("sessions should be readable");
+
+    assert_eq!(sessions.len(), 1);
+    assert_eq!(
+        sessions[0].session_id,
+        format!("rollout-2026-11-03T12-00-00-{THREAD}")
+    );
+    assert_eq!(sessions[0].last_signal, TurnSignal::TurnStarted);
+    assert_eq!(sessions[0].project.as_deref(), Some("project"));
+}
+
+#[test]
+fn a_rollout_without_lock_is_a_closed_thread() {
+    let root = tempfile::tempdir().expect("temporary folder should be writable");
+    add_lock(&root, THREAD, Duration::from_secs(30));
+    add_session(
+        &root,
+        "rollout-2026-11-03T11-00-00-closed.jsonl",
+        "turn-complete.jsonl",
+        Duration::from_secs(60),
+    );
+
+    let ids: Vec<String> = source(&root)
+        .sessions()
+        .expect("sessions should be readable")
+        .into_iter()
+        .map(|session| session.session_id)
+        .collect();
+
+    assert_eq!(ids, [THREAD]);
+}
+
+#[test]
+fn without_lock_folder_the_recent_rollouts_are_agents() {
+    let root = tempfile::tempdir().expect("temporary folder should be writable");
+    add_session(
+        &root,
+        "rollout-2026-11-03T11-00-00-unlocked.jsonl",
+        "turn-complete.jsonl",
+        Duration::from_secs(60),
+    );
+
+    let sessions = source(&root)
+        .sessions()
+        .expect("sessions should be readable");
+
+    assert_eq!(sessions.len(), 1);
+    assert_eq!(sessions[0].last_signal, TurnSignal::TurnEnded);
+}
+
+#[test]
+fn an_empty_lock_folder_has_no_agent() {
+    let root = tempfile::tempdir().expect("temporary folder should be writable");
+    add_lock(&root, THREAD, Duration::ZERO);
+    fs::remove_file(
+        root.path()
+            .join(format!("thread-writer-locks/{THREAD}.lock")),
+    )
+    .expect("lock should be removable");
+    add_session(
+        &root,
+        "rollout-2026-11-03T11-00-00-closed.jsonl",
+        "turn-complete.jsonl",
+        Duration::from_secs(60),
+    );
+
+    let sessions = source(&root).sessions();
+
+    assert!(sessions.is_ok_and(|sessions| sessions.is_empty()));
+}

@@ -1,5 +1,7 @@
-//! Codex agents: one per session file written recently, with the state of
-//! its last turn.
+//! Codex agents. When the CLI locks its open threads, the agents are
+//! exactly those threads; otherwise one per session file written recently.
+//! The state comes from the last turn of the session file, `waiting` for a
+//! thread that has none yet.
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -14,6 +16,7 @@ use application::{AgentStateSource, SourceError};
 use domain::{AgentSession, Provider, TurnSignal, ACTIVE_WITHIN};
 use serde::Deserialize;
 
+use crate::open_threads::{open_threads, OpenThread};
 use crate::{turn_signal, SESSIONS_DIR, SESSION_EXTENSION};
 
 /// Depth of `sessions/<year>/<month>/<day>/<file>`, with some slack.
@@ -126,6 +129,11 @@ where
                         continue;
                     }
                 };
+            let threads = open_threads(&root);
+            let files = match &threads {
+                Some(threads) => locked_files(files, threads),
+                None => files,
+            };
             for file in &files {
                 match self.session(file, &mut cache) {
                     Ok(session) => sessions.push(session),
@@ -136,6 +144,9 @@ where
                 }
                 seen.push(file.path.clone());
             }
+            if let Some(threads) = threads {
+                sessions.extend(new_threads(threads, &files));
+            }
         }
         cache.retain(|path, _| seen.contains(path));
         match (sessions.is_empty(), first_error) {
@@ -143,6 +154,38 @@ where
             _ => Ok(sessions),
         }
     }
+}
+
+/// Session files of the open threads; the others belong to closed threads.
+fn locked_files(files: Vec<DatedFile>, threads: &[OpenThread]) -> Vec<DatedFile> {
+    files
+        .into_iter()
+        .filter(|file| threads.iter().any(|thread| holds(file, thread)))
+        .collect()
+}
+
+/// Open threads without session file yet: Codex writes it on the first
+/// message, so they wait for the user since their lock.
+fn new_threads(threads: Vec<OpenThread>, files: &[DatedFile]) -> Vec<AgentSession> {
+    threads
+        .into_iter()
+        .filter(|thread| !files.iter().any(|file| holds(file, thread)))
+        .map(|thread| AgentSession {
+            provider: Provider::Codex,
+            session_id: thread.id,
+            project: None,
+            last_signal: TurnSignal::TurnEnded,
+            last_write: adapter_fs::epoch_seconds(thread.locked),
+        })
+        .collect()
+}
+
+/// Whether `file` is the session file of `thread`: its name has the id.
+fn holds(file: &DatedFile, thread: &OpenThread) -> bool {
+    file.path
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .is_some_and(|stem| stem.contains(thread.id.as_str()))
 }
 
 /// Oldest mtime of an active session.
