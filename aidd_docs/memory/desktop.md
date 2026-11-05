@@ -15,6 +15,7 @@
 - Tout accès aux fichiers passe par Rust, jamais par les plugins fs côté JS.
 - Réseau : un seul appel HTTPS, vers `api.anthropic.com/api/oauth/usage`, seulement si l'option OAuth est cochée (ADR 0002). Aucun autre accès réseau.
 - Lecture du token de Claude Code (`<.claude>/.credentials.json`) seulement pour cet appel, à chaque appel, jamais stocké.
+- L'heure du dernier appel OAuth est gardée dans `<app_config_dir>/oauth-last-poll` : un redémarrage n'appelle jamais avant le délai minimal (13 min).
 - Processus lancés par l'app, tous sans console :
   - `wsl.exe --list --running --quiet`, au plus une fois toutes les 30 s (liste en cache), pour lister les distros WSL déjà démarrées. Une distro arrêtée n'est jamais lue, car accéder à `\\wsl.localhost\<distro>` la démarrerait.
   - `codex app-server` (option, au plus une fois par minute) : `codex.exe` ou `codex.cmd` du `PATH`, sinon `wsl.exe -d <distro> --exec sh -lc 'exec codex app-server'` pour une distro déjà démarrée. Arrêté après chaque échange.

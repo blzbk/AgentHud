@@ -2,6 +2,7 @@
 //! endpoint) on their own schedule, away from the file polling. The rules
 //! live in `application` (`PollScheduler`); this module is the Tauri glue.
 
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, SystemTime};
 
@@ -19,6 +20,8 @@ pub struct RemotePolls {
     /// Official Claude quotas: while fresh, OAuth is never polled.
     pub claude_statusline: Arc<dyn UsageSource>,
     activity: Mutex<Activity>,
+    /// File keeping the time of the last OAuth poll across launches.
+    oauth_marker: Mutex<Option<PathBuf>>,
 }
 
 impl RemotePolls {
@@ -32,7 +35,23 @@ impl RemotePolls {
             claude_oauth,
             claude_statusline,
             activity: Mutex::new(Activity::Quiet),
+            oauth_marker: Mutex::new(None),
         }
+    }
+
+    /// Keeps the time of the last OAuth poll in `marker`, and resumes from
+    /// the one a previous launch saved there: a restart never polls OAuth
+    /// sooner than its floor (13 min).
+    pub fn remember_oauth_polls(&self, marker: PathBuf) {
+        match read_epoch(&marker) {
+            Ok(Some(at)) => self.claude_oauth.resume(at),
+            Ok(None) => {}
+            Err(error) => log::warn!("last OAuth poll time unreadable: {error}"),
+        }
+        *self
+            .oauth_marker
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner) = Some(marker);
     }
 
     /// Records the activity of the agents, seen by the file polling.
@@ -61,11 +80,46 @@ impl RemotePolls {
                 log::warn!("Claude statusline unreadable: {error}");
                 None
             });
-            if statusline_is_stale(statusline.as_ref(), now) {
-                self.claude_oauth.poll_if_due(now);
+            if statusline_is_stale(statusline.as_ref(), now) && self.claude_oauth.poll_if_due(now) {
+                self.save_oauth_poll(now);
             }
         }
     }
+}
+
+impl RemotePolls {
+    fn save_oauth_poll(&self, at: domain::EpochSeconds) {
+        let marker = self
+            .oauth_marker
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone();
+        if let Some(marker) = marker {
+            if let Err(error) = write_epoch(&marker, at) {
+                log::warn!("cannot save the last OAuth poll time: {error}");
+            }
+        }
+    }
+}
+
+/// Epoch seconds saved in `path`, `None` when the file does not exist.
+fn read_epoch(path: &Path) -> std::io::Result<Option<domain::EpochSeconds>> {
+    match std::fs::read_to_string(path) {
+        Ok(text) => text
+            .trim()
+            .parse()
+            .map(Some)
+            .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidData, error)),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(error),
+    }
+}
+
+fn write_epoch(path: &Path, at: domain::EpochSeconds) -> std::io::Result<()> {
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir)?;
+    }
+    std::fs::write(path, at.to_string())
 }
 
 /// Starts the remote polling task. It runs for the whole life of the app.

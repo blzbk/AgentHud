@@ -64,6 +64,17 @@ impl PolledUsage {
         self.state().enabled
     }
 
+    /// Resumes after a poll made at `at` by a previous launch.
+    pub fn resume(&self, at: EpochSeconds) {
+        self.state().scheduler.resume(at);
+    }
+
+    /// Time of the last poll, `None` before the first one.
+    #[must_use]
+    pub fn last_poll_at(&self) -> Option<EpochSeconds> {
+        self.state().scheduler.last_poll_at()
+    }
+
     /// Records the current activity of the agents.
     pub fn observe_activity(&self, activity: Activity) {
         self.state().scheduler.observe_activity(activity);

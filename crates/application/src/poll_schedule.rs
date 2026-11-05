@@ -154,6 +154,21 @@ impl PollScheduler {
         self.woke = false;
     }
 
+    /// Resumes after a poll made at `at` by a previous launch, so a restart
+    /// waits for the usual delay instead of polling at once. Ignored once a
+    /// poll was recorded in this launch.
+    pub fn resume(&mut self, at: EpochSeconds) {
+        if self.last_poll.is_none() {
+            self.last_poll = Some((at, PollOutcome::Fresh(Exhaustion::Available)));
+        }
+    }
+
+    /// Time of the last poll, `None` before the first one.
+    #[must_use]
+    pub fn last_poll_at(&self) -> Option<EpochSeconds> {
+        self.last_poll.map(|(at, _)| at)
+    }
+
     /// Records the current activity of the agents.
     pub fn observe_activity(&mut self, activity: Activity) {
         if self.activity == Activity::Quiet && activity == Activity::Busy {
@@ -367,5 +382,25 @@ mod tests {
 
         assert_eq!(Activity::of(&agents, NOW), Activity::Quiet);
         assert_eq!(Activity::of(&[], NOW), Activity::Quiet);
+    }
+
+    #[test]
+    fn a_restart_waits_for_the_delay_of_the_previous_poll() {
+        let mut scheduler = PollScheduler::new(OAUTH);
+        scheduler.resume(1_000);
+
+        assert!(!scheduler.is_due(1_000 + 12 * 60));
+        assert!(scheduler.is_due(1_000 + OAUTH.quiet));
+        assert_eq!(scheduler.last_poll_at(), Some(1_000));
+    }
+
+    #[test]
+    fn resume_never_overrides_a_poll_of_this_launch() {
+        let mut scheduler = PollScheduler::new(OAUTH);
+        scheduler.record(5_000, PollOutcome::AuthExpired);
+        scheduler.resume(1_000);
+
+        assert_eq!(scheduler.last_poll_at(), Some(5_000));
+        assert!(scheduler.auth_expired());
     }
 }

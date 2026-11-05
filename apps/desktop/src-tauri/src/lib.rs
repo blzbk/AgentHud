@@ -58,6 +58,14 @@ pub fn run() {
             let options = options_store::load(app.handle());
             let composition = usage_loop::compose(options.current());
             app.manage(options);
+            match app.path().app_config_dir() {
+                Ok(dir) => composition
+                    .remote
+                    .remember_oauth_polls(dir.join("oauth-last-poll")),
+                Err(error) => {
+                    log::warn!("no app config directory for the OAuth poll time: {error}");
+                }
+            }
             app.manage(std::sync::Arc::clone(&composition.remote));
             remote_poll::start(std::sync::Arc::clone(&composition.remote));
             usage_loop::start(app.handle(), composition);
