@@ -19,12 +19,18 @@ export type WindowUsage = {
 
 export type Provider = "codex" | "claude";
 
+/** Where the usage comes from, mirroring `Origin` in `crates/domain`. */
+export type UsageSource = "sessions" | "app-server" | "statusline" | "oauth" | "estimate";
+
 export type ProviderUsage = {
   provider: Provider;
   status: "known" | "unknown";
   fiveHours?: WindowUsage;
   weekly?: WindowUsage;
   observedAt?: number;
+  source?: UsageSource;
+  /** A polled source of the provider needs the user to log in again. */
+  authExpired?: boolean;
 };
 
 /** Providers in display order. */

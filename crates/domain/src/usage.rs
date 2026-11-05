@@ -133,6 +133,44 @@ impl UsageWindow {
     }
 }
 
+/// Where a usage snapshot comes from, shown next to the data.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Origin {
+    /// Codex session files (`token_count` events).
+    Sessions,
+    /// `codex app-server`, the official Codex client.
+    AppServer,
+    /// The Claude Code statusline script, the official Claude source.
+    Statusline,
+    /// The Claude OAuth usage endpoint, the degraded mode.
+    OAuth,
+    /// Tokens summed from the Claude transcripts, an estimate.
+    Transcripts,
+}
+
+impl Origin {
+    /// Wire name shared with the UI.
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Sessions => "sessions",
+            Self::AppServer => "app-server",
+            Self::Statusline => "statusline",
+            Self::OAuth => "oauth",
+            Self::Transcripts => "estimate",
+        }
+    }
+}
+
+/// Whether a quota is used up, and until when.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Exhaustion {
+    /// Every known window still has room.
+    Available,
+    /// A window is at 100 %: it resets at the given time, when known.
+    Until(Option<EpochSeconds>),
+}
+
 /// Usage of one provider, as observed at a given time.
 #[derive(Debug, Clone, PartialEq)]
 pub struct UsageSnapshot {
@@ -140,11 +178,43 @@ pub struct UsageSnapshot {
     pub five_hours: Option<UsageWindow>,
     pub weekly: Option<UsageWindow>,
     pub observed_at: EpochSeconds,
+    pub origin: Origin,
+}
+
+impl UsageSnapshot {
+    /// Whether a window known in percent is used up at `now`. With several
+    /// used-up windows, the quota is back only once the last one resets.
+    #[must_use]
+    pub fn exhaustion(&self, now: EpochSeconds) -> Exhaustion {
+        let mut exhausted = None;
+        for window in [self.five_hours, self.weekly].into_iter().flatten() {
+            let used_up =
+                matches!(window.used_at(now), Usage::Percent(percent) if percent >= 100.0);
+            if !used_up {
+                continue;
+            }
+            exhausted = Some(match (exhausted, window.resets_at()) {
+                (None, resets_at) => resets_at,
+                (Some(Some(previous)), Some(resets_at)) => Some(resets_at.max(previous)),
+                (Some(_), _) => None,
+            });
+        }
+        exhausted.map_or(Exhaustion::Available, Exhaustion::Until)
+    }
+
+    /// Whether the usage is a published share, not an estimate in tokens.
+    #[must_use]
+    pub fn is_exact(&self) -> bool {
+        [self.five_hours, self.weekly]
+            .into_iter()
+            .flatten()
+            .any(|window| !window.is_estimated() && window.used_percent().is_some())
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Provider, Usage, UsageWindow, WindowKind};
+    use super::{Exhaustion, Origin, Provider, Usage, UsageSnapshot, UsageWindow, WindowKind};
 
     const NOW: i64 = 1_793_840_000;
 
@@ -216,5 +286,70 @@ mod tests {
             [Provider::Codex, Provider::Claude].map(Provider::label),
             ["codex", "claude"]
         );
+    }
+
+    fn snapshot(five_hours: Option<UsageWindow>, weekly: Option<UsageWindow>) -> UsageSnapshot {
+        UsageSnapshot {
+            provider: Provider::Codex,
+            five_hours,
+            weekly,
+            observed_at: NOW,
+            origin: Origin::AppServer,
+        }
+    }
+
+    #[test]
+    fn origins_have_distinct_wire_names() {
+        assert_eq!(
+            [
+                Origin::Sessions,
+                Origin::AppServer,
+                Origin::Statusline,
+                Origin::OAuth,
+                Origin::Transcripts
+            ]
+            .map(Origin::label),
+            ["sessions", "app-server", "statusline", "oauth", "estimate"]
+        );
+    }
+
+    #[test]
+    fn a_quota_with_room_is_available() {
+        let usage = snapshot(Some(window(99.5, Some(NOW + 60))), None);
+
+        assert_eq!(usage.exhaustion(NOW), Exhaustion::Available);
+    }
+
+    #[test]
+    fn a_full_window_is_exhausted_until_its_reset() {
+        let usage = snapshot(Some(window(100.0, Some(NOW + 60))), None);
+
+        assert_eq!(usage.exhaustion(NOW), Exhaustion::Until(Some(NOW + 60)));
+        assert_eq!(usage.exhaustion(NOW + 60), Exhaustion::Available);
+    }
+
+    #[test]
+    fn the_latest_reset_of_full_windows_ends_the_exhaustion() {
+        let weekly = UsageWindow::new(WindowKind::Weekly, 100.0, Some(NOW + 3600));
+        let usage = snapshot(Some(window(100.0, Some(NOW + 60))), weekly);
+
+        assert_eq!(usage.exhaustion(NOW), Exhaustion::Until(Some(NOW + 3600)));
+    }
+
+    #[test]
+    fn a_full_window_without_reset_is_exhausted_for_an_unknown_time() {
+        let usage = snapshot(Some(window(100.0, None)), None);
+
+        assert_eq!(usage.exhaustion(NOW), Exhaustion::Until(None));
+    }
+
+    #[test]
+    fn a_token_window_is_never_exhausted_nor_exact() {
+        let tokens = UsageWindow::tokens(WindowKind::FiveHours, 10, None).estimated();
+        let usage = snapshot(Some(tokens), None);
+
+        assert_eq!(usage.exhaustion(NOW), Exhaustion::Available);
+        assert!(!usage.is_exact());
+        assert!(snapshot(Some(window(1.0, None)), None).is_exact());
     }
 }

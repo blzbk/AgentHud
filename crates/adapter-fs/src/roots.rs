@@ -4,12 +4,19 @@
 
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, PoisonError};
+use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 /// Lists the WSL distributions currently running.
 pub trait DistroLister: Send + Sync {
     fn running(&self) -> Vec<String>;
+}
+
+/// A shared lister, such as one [`CachedLister`] used by every source.
+impl<T: DistroLister + ?Sized> DistroLister for Arc<T> {
+    fn running(&self) -> Vec<String> {
+        (**self).running()
+    }
 }
 
 /// No WSL distribution: the host itself is the only root.

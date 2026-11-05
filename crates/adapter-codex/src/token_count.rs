@@ -2,7 +2,7 @@
 //! its session files. Every field is optional: the schema changes between
 //! Codex versions, and an unexpected line is skipped rather than failing.
 
-use domain::{EpochSeconds, Provider, UsageSnapshot, UsageWindow, WindowKind};
+use domain::{EpochSeconds, Origin, Provider, UsageSnapshot, UsageWindow, WindowKind};
 use serde::Deserialize;
 
 const FIVE_HOURS_MINUTES: i64 = 300;
@@ -92,11 +92,12 @@ pub fn parse_line(line: &str, fallback_time: EpochSeconds) -> Option<UsageSnapsh
         five_hours,
         weekly,
         observed_at,
+        origin: Origin::Sessions,
     })
 }
 
 /// Window kind from its length, with a 10 % tolerance.
-fn kind_of(minutes: i64) -> Option<WindowKind> {
+pub(crate) fn kind_of(minutes: i64) -> Option<WindowKind> {
     let near = |target: i64| (minutes - target).abs() * 10 <= target;
     if near(FIVE_HOURS_MINUTES) {
         Some(WindowKind::FiveHours)

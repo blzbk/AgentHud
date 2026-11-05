@@ -11,9 +11,11 @@
 
 ## Components
 
-- Une carte par provider, dans l'ordre Codex puis Claude : âge de la donnée, une ligne par fenêtre d'usage, puis la liste des agents.
+- Une carte par provider, dans l'ordre Codex puis Claude : source de la donnée, âge, une ligne par fenêtre d'usage, « auth expirée » si une sonde le signale, puis la liste des agents.
+  - Source : `session` ou `app-server` (Codex), `statusline`, `OAuth ⚠` (couleur d'alerte) ou `estimation` (Claude).
   - Codex : jauges `5h` et `hebdo` en %, avec l'heure de reset.
-  - Claude : `5h` en tokens (`1,2 M tokens`, `850 k tokens`), reset préfixé de `~` et mention « estimé ». Pas de ligne hebdo.
+  - Claude avec `statusline` ou `OAuth ⚠` : jauges `5h` et `hebdo`, comme Codex.
+  - Claude en `estimation` : `5h` en tokens (`1,2 M tokens`, `850 k tokens`), reset préfixé de `~` et mention « estimé ». Pas de ligne hebdo.
 - Un badge d'état par agent, avec son libellé : `working`, `waiting`, `idle` ou `unknown`, suivi du projet ou d'un identifiant court. Au plus 4 agents par provider, puis `+N`. Un provider sans session active affiche un seul badge `offline`.
 - Toute valeur inconnue s'affiche `unknown`, jamais vide ni à 0 % par défaut.
 

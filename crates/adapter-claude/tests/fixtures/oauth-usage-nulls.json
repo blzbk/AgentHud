@@ -1,0 +1,1 @@
+{"five_hour":null,"seven_day":{"utilization":64,"resets_at":null},"limits":[{"kind":"session","percent":12,"resets_at":"2026-11-05T18:00:00Z"}],"unexpected":{"nested":[1,2,3]}}

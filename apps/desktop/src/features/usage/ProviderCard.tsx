@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { formatAge, formatPercent, formatReset, formatTokens, nowInSeconds } from "./format";
 import styles from "./ProviderCard.module.css";
-import type { Provider, ProviderUsage, WindowUsage } from "./useUsage";
+import type { Provider, ProviderUsage, UsageSource, WindowUsage } from "./useUsage";
 
 export const PROVIDER_NAMES: Record<Provider, string> = {
   codex: "Codex",
@@ -15,11 +15,29 @@ const WINDOW_LABELS: Record<WindowKind, string> = {
   weekly: "hebdo",
 };
 
-/** Windows each provider publishes: Claude has no known weekly window. */
-const PROVIDER_WINDOWS: Record<Provider, readonly WindowKind[]> = {
-  codex: ["fiveHours", "weekly"],
-  claude: ["fiveHours"],
+const ALL_WINDOWS: readonly WindowKind[] = ["fiveHours", "weekly"];
+
+/** Sources that publish a share of the quota, not an estimate in tokens. */
+const EXACT_SOURCES: ReadonlySet<UsageSource> = new Set(["sessions", "app-server", "statusline", "oauth"]);
+
+/** Label of each source, shown next to the provider name. */
+export const SOURCE_LABELS: Record<UsageSource, string> = {
+  sessions: "session",
+  "app-server": "app-server",
+  statusline: "statusline",
+  oauth: "OAuth ⚠",
+  estimate: "estimation",
 };
+
+/**
+ * Windows to show: Codex always publishes both. Claude shows both only with
+ * an exact source, its estimate covers the 5-hour block only.
+ */
+function windowsOf(usage: ProviderUsage): readonly WindowKind[] {
+  if (usage.provider === "codex") return ALL_WINDOWS;
+  const exact = usage.status === "known" && usage.source !== undefined && EXACT_SOURCES.has(usage.source);
+  return exact ? ALL_WINDOWS : ["fiveHours"];
+}
 
 /** How often resets and ages are recomputed between two native updates. */
 const CLOCK_INTERVAL_MS = 60_000;
@@ -99,7 +117,8 @@ type ProviderCardProps = {
 
 /**
  * Usage of one provider: a row per quota window, in percent with a gauge or
- * in tokens, its reset and the data age.
+ * in tokens, its reset, the source and age of the data, and a warning when a
+ * login has expired.
  */
 export function ProviderCard({ usage, children }: ProviderCardProps) {
   const now = useNow();
@@ -110,11 +129,16 @@ export function ProviderCard({ usage, children }: ProviderCardProps) {
     <section className={styles.card} aria-label={name}>
       <header className={styles.header}>
         <h2 className={styles.name}>{name}</h2>
+        {known && usage.source !== undefined && (
+          <span className={styles.source} data-source={usage.source}>
+            {SOURCE_LABELS[usage.source]}
+          </span>
+        )}
         {known && usage.observedAt !== undefined && (
           <span className={styles.age}>{formatAge(usage.observedAt, now)}</span>
         )}
       </header>
-      {PROVIDER_WINDOWS[usage.provider].map((kind) => (
+      {windowsOf(usage).map((kind) => (
         <WindowRow
           key={kind}
           label={WINDOW_LABELS[kind]}
@@ -122,6 +146,7 @@ export function ProviderCard({ usage, children }: ProviderCardProps) {
           now={now}
         />
       ))}
+      {usage.authExpired && <p className={styles.warning}>auth expirée</p>}
       {children}
     </section>
   );

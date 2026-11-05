@@ -8,7 +8,7 @@
 ## Why it exists
 
 - Voir d'un coup d'œil le quota restant et l'activité de chaque agent, sans ouvrir de terminal ni de dashboard.
-- Rester **indépendant** des CLI surveillées : aucun hook, aucune configuration, aucun token. Ne jamais enfreindre les règles d'usage des providers.
+- Rester **indépendant** des CLI surveillées : aucun hook, aucune configuration automatique, aucun token stocké. Ne jamais enfreindre les règles d'usage des providers, sauf le mode dégradé OAuth de Claude : optionnel, désactivé par défaut, risque assumé par l'utilisateur (ADR 0002).
 
 ## Domain language
 
@@ -22,6 +22,6 @@
 
 ## Key features
 
-- Usage des fenêtres 5 h et hebdomadaire pour Codex, en %. Pour Claude, tokens consommés sur un bloc de 5 h **estimé** à partir des transcripts locaux.
+- Usage des fenêtres 5 h et hebdomadaire en %, pour Codex (sessions ou `codex app-server`) et pour Claude (statusline, ou OAuth en mode dégradé optionnel, ADR 0002). Sans % pour Claude : tokens consommés sur un bloc de 5 h **estimé** à partir des transcripts locaux.
 - État de chaque agent : en attente, working, idle ou hors ligne.
 - Valeurs en cache avec leur âge, et remise à 0 % une fois `resets_at` passé.
