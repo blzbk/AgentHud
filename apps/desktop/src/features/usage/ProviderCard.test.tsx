@@ -126,4 +126,72 @@ describe("ProviderCard", () => {
     const card = screen.getByRole("region", { name: "Claude" });
     expect(within(card).getByText("agents")).toBeInTheDocument();
   });
+
+  const claudeExact: ProviderUsage = {
+    provider: "claude",
+    status: "known",
+    fiveHours: { usedPercent: 30, resetsAt: at(18, 0) },
+    weekly: { usedPercent: 60, resetsAt: NOW + 3 * 86400 },
+    observedAt: NOW - 10,
+    source: "statusline",
+  };
+
+  it("shows Claude gauges like Codex with an exact source", () => {
+    render(<ProviderCard usage={claudeExact} />);
+
+    const card = screen.getByRole("region", { name: "Claude" });
+    expect(screen.getByRole("meter", { name: "5h" })).toHaveAttribute("aria-valuenow", "30");
+    expect(screen.getByRole("meter", { name: "hebdo" })).toHaveAttribute("aria-valuenow", "60");
+    expect(row("5h")).toHaveTextContent("↻ 18:00");
+    expect(row("5h")).not.toHaveTextContent("~");
+    expect(card).not.toHaveTextContent("tokens");
+    expect(within(card).getByText("statusline")).toBeInTheDocument();
+  });
+
+  it("flags the OAuth source as risky", () => {
+    render(<ProviderCard usage={{ ...claudeExact, source: "oauth" }} />);
+
+    expect(screen.getByText("OAuth ⚠")).toBeInTheDocument();
+    expect(screen.getByRole("meter", { name: "hebdo" })).toBeInTheDocument();
+  });
+
+  it("names the estimate of Claude", () => {
+    render(<ProviderCard usage={{ ...claude, source: "estimate" }} />);
+
+    const card = screen.getByRole("region", { name: "Claude" });
+    expect(within(card).getByText("estimation")).toBeInTheDocument();
+    expect(within(card).queryByText("hebdo")).not.toBeInTheDocument();
+    expect(row("5h")).toHaveTextContent("1,2 M tokens");
+  });
+
+  it("shows unknown for an exact Claude window that is missing", () => {
+    render(<ProviderCard usage={{ ...claudeExact, fiveHours: undefined }} />);
+
+    expect(row("5h")).toHaveTextContent("unknown");
+    expect(row("hebdo")).toHaveTextContent("60 %");
+  });
+
+  it("names the Codex source", () => {
+    const { rerender } = render(<ProviderCard usage={{ ...known, source: "app-server" }} />);
+    expect(screen.getByText("app-server")).toBeInTheDocument();
+
+    rerender(<ProviderCard usage={{ ...known, source: "sessions" }} />);
+    expect(screen.getByText("session")).toBeInTheDocument();
+  });
+
+  it("warns when a login has expired, even without usage", () => {
+    render(<ProviderCard usage={{ provider: "claude", status: "unknown", authExpired: true }} />);
+
+    const card = screen.getByRole("region", { name: "Claude" });
+    expect(within(card).getByText("auth expirée")).toBeInTheDocument();
+    expect(within(card).getAllByText("unknown")).toHaveLength(1);
+  });
+
+  it("shows no source nor warning when they are not reported", () => {
+    render(<ProviderCard usage={known} />);
+
+    const card = screen.getByRole("region", { name: "Codex" });
+    expect(card).not.toHaveTextContent("auth expirée");
+    expect(card).not.toHaveTextContent("session");
+  });
 });

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: UI : jauges Claude, source des données et auth expirée

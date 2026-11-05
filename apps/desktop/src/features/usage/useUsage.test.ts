@@ -11,6 +11,8 @@ const KNOWN: ProviderUsage[] = [
     fiveHours: { usedPercent: 12, resetsAt: 1_793_844_772 },
     weekly: { usedPercent: 51, resetsAt: 1_794_184_565 },
     observedAt: 1_793_831_988,
+    source: "app-server",
+    authExpired: true,
   },
 ];
 

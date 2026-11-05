@@ -14,6 +14,21 @@
   font-weight: 600;
 }
 
+.source {
+  margin-left: var(--space-2);
+  margin-right: auto;
+  color: var(--color-text-muted);
+}
+
+.source[data-source="oauth"],
+.warning {
+  color: var(--color-state-waiting);
+}
+
+.warning {
+  margin: var(--space-1) 0 0;
+}
+
 .age {
   color: var(--color-text-muted);
 }
