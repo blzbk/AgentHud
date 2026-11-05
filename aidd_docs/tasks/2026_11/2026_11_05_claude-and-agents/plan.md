@@ -17,6 +17,7 @@ Source: stories #4 (état des agents Codex), #5 (état des agents Claude) et #6 
 | 4   | Adapter Claude : tokens sur 5 h et état des agents | [`phase-4.md`](./phase-4.md) | 1, 2 |
 | 5   | HUD multi-LLM : cartes Codex et Claude avec leurs agents | [`phase-5.md`](./phase-5.md) | 3, 4 |
 | 6   | Exe et tests manuels Windows | [`phase-6.md`](./phase-6.md) | 5 |
+| 7   | Agents réellement ouverts (marqueurs d'exécution des CLI) | [`phase-7.md`](./phase-7.md) | 5 |
 
 ## External sources
 
