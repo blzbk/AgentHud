@@ -2,6 +2,8 @@
 //! `application` ports for the Claude provider.
 
 mod agent_sessions;
+mod credentials;
+mod oauth_usage;
 mod running_sessions;
 mod statusline_source;
 mod transcript;
@@ -9,6 +11,7 @@ mod usage_block;
 mod usage_source;
 
 pub use agent_sessions::ClaudeAgentSessions;
+pub use oauth_usage::{ClaudeOAuthUsage, HttpReply, HttpTransport, UreqTransport, USAGE_URL};
 pub use statusline_source::{ClaudeStatuslineSource, RATE_LIMITS_FILE};
 pub use usage_source::ClaudeUsageSource;
 
